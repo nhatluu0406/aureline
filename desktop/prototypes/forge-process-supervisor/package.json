@@ -1,0 +1,18 @@
+{
+  "name": "@forge-desktop/forge-process-supervisor-prototype",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "demo": "node --experimental-transform-types src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-transform-types --test --test-concurrency=1 test/readiness.test.ts test/redaction.test.ts test/supervisor.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3"
+  }
+}
