@@ -124,7 +124,7 @@ Prototype cho phép launch có hoặc không có auth và chứng minh redaction
 - thin bridge extension: phù hợp để thêm whole-app token middleware, health/version và shutdown contract nhỏ; phải pin runtime và test Gradio/WebSocket/Classic;
 - Electron main proxy: nên là đường duy nhất cho Studio renderer, giữ token khỏi renderer; chưa đủ cho Classic UI vốn tải trực tiếp loopback origin.
 
-Kết luận hiện tại: Studio đi qua Electron main proxy; secure local auth cần spike riêng, nhiều khả năng là bridge cực mỏng nhận per-launch credential qua environment hoặc ACL file. Không bật `--api-server-stop` production trước khi bảo vệ toàn app được chứng minh.
+Spike tại `../secure-forge-bridge/` chọn hybrid: Studio đi typed IPC → main-only client; Classic đi Electron-owned authenticated proxy; direct backend được bảo vệ bởi outer ASGI guard cài pre-bind. Credential production đề xuất đi qua anonymous inherited pipe/handle từ signed Job helper, không environment value hoặc ACL file mặc định. `on_app_started` riêng lẻ quá muộn để làm boundary từ packet đầu. Không bật `--api-server-stop` production trước real-Forge compatibility smoke.
 
 ## 12. Cách chạy test
 

@@ -101,11 +101,11 @@ Verification levels:
 - interrupt/stop/restart timeout và crash classification;
 - fake child/API integration fixture;
 - Windows Job Object prototype và real Forge `--ui-debug-mode --api` smoke khi environment cho phép;
-- secure token gap report/bridge go-no-go decision.
+- tích hợp direction từ auth spike: outer ASGI guard pre-bind, protected identity và Electron Classic proxy contract.
 
 **Out of scope:** production runtime downloader, inference, VRAM policy, extension manager.
 
-**Deliverables:** `process-supervisor`, `forge-client` readiness subset, integration tests, prototype report; bridge ADR amendment nếu cần.
+**Deliverables:** `process-supervisor`, `forge-client` protected-readiness subset, local-bridge contract, integration tests và prototype reports.
 
 **Acceptance criteria:**
 
@@ -164,7 +164,7 @@ Verification levels:
 
 **In scope:**
 
-- `WebContentsView` tới exact loopback origin sau readiness;
+- `WebContentsView` tới exact authenticated Classic proxy origin sau protected identity readiness;
 - Gradio auth/session/WebSocket, downloads, file dialogs, clipboard, drag-drop policy;
 - bounds/focus/zoom/theme/loading/error/reconnect states;
 - external browser fallback;
@@ -176,7 +176,7 @@ Verification levels:
 
 **Acceptance criteria:**
 
-- chỉ exact `127.0.0.1:<active-port>` được navigation trong guest;
+- chỉ exact `127.0.0.1:<active-proxy-port>` được navigation trong guest; backend port không được expose cho guest;
 - guest không có Node/Studio preload; popup/external URL xử lý theo allowlist;
 - Gradio assets/WebSocket/auth và ít nhất representative built-in tabs load;
 - engine restart chuyển guest qua reconnect state rồi recover;
@@ -367,4 +367,3 @@ Verification levels:
 - không scaffold UI, không inference, không bridge implementation.
 
 Lý do ưu tiên trước Electron scaffold: khảo sát đã chứng minh process exit/auth/dynamic-port là rủi ro kiến trúc lớn nhất; kết quả prototype sẽ quyết định contract của main process, bridge và portable runtime, tránh khóa scaffold vào assumption sai.
-

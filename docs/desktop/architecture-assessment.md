@@ -254,7 +254,7 @@ CPython embeddable distribution là tối giản và tài liệu chính thức n
 
 - Startup/shutdown thật trên Windows GPU machine, exit code và thời gian cleanup sau interrupt/OOM.
 - Contract của Gradio 4.40.0 với explicit dynamic port, WebSocket, auth và `WebContentsView`.
-- Bridge middleware nhận secret ngoài CLI, bảo vệ cả `/sdapi`, `/internal`, docs và Gradio mà không phá assets/WebSocket.
+- Local-auth spike chọn outer ASGI guard pre-bind + Electron Classic proxy và anonymous-pipe secret transport. Fake HTTP/WebSocket/SSE-like tests pass; Forge/Gradio 4.40 thật, absolute URL/CSP/UI reload và packaged Electron header injection vẫn cần bounded compatibility smoke.
 - Chính xác các write vào runtime root trong normal generation, extension install và UI reload.
 - Process tree thực tế và compatibility của Windows Job Object với Python, Git, extension subprocess.
 - External GPU telemetry cho NVIDIA/Intel/AMD, multi-GPU mapping với Forge selected device.
@@ -268,4 +268,3 @@ CPython embeddable distribution là tối giản và tài liệu chính thức n
 - [Tauri Windows installer và WebView2 modes](https://v2.tauri.app/distribute/windows-installer/)
 - [Python 3.10 trên Windows và embeddable package](https://docs.python.org/3.10/using/windows.html)
 - [Microsoft Windows Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects)
-

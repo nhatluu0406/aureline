@@ -1,6 +1,6 @@
 # ADR-001: Nền tảng Forge Desktop cho Windows portable
 
-- **Status:** Accepted for foundation; các unknown được ghi rõ cần prototype
+- **Status:** Accepted for foundation; amended 2026-07-20 bởi process ownership và local auth spikes
 - **Date:** 2026-07-19
 - **Decision owners:** Desktop architecture maintainers
 - **Code baseline:** `dfdcbab685e57677014f05a3309b48cc87383167`
@@ -28,10 +28,10 @@ Các boundary thực tế từ code:
 3. **Repository:** Cùng repository, thêm top-level `desktop/` cô lập; không tách repo ở giai đoạn này.
 4. **Engine boundary:** Forge chạy bằng Python child process độc lập; không embedded CPython.
 5. **Distribution:** Portable ZIP có nhiều file, không single EXE.
-6. **Communication:** Studio renderer dùng typed preload IPC; Electron main sở hữu Forge API client và secret.
-7. **Classic rendering:** isolated `WebContentsView`, với child `BrowserWindow`/external browser là recovery fallback.
-8. **Bridge:** không tạo ngay; chỉ thêm extension rất mỏng khi prototype chứng minh native API thiếu contract bắt buộc.
-9. **Network:** bind `127.0.0.1`, dynamic explicit port, random per-launch local credential; không LAN/share mặc định.
+6. **Communication:** Studio renderer dùng typed preload IPC; Electron main sở hữu Forge API client và backend credential.
+7. **Classic rendering:** isolated `WebContentsView` dùng authenticated Electron-owned loopback proxy và ephemeral session; child `BrowserWindow`/external browser chỉ là recovery fallback đã đánh giá lại theo auth policy.
+8. **Bridge:** local-auth spike đã chứng minh native auth không bao phủ toàn surface. Runtime cần outer ASGI guard cực mỏng được cài pre-bind qua launcher adapter version-pinned; không dựa riêng vào `on_app_started`.
+9. **Network:** Forge backend và Classic proxy đều bind explicit `127.0.0.1`, dynamic port, credential riêng mỗi launch; không LAN/share mặc định.
 10. **VRAM:** Forge tiếp tục quyết định model placement/offload; desktop orchestration chỉ telemetry, policy trước job, queue và recovery.
 
 ### Target source layout
@@ -67,14 +67,15 @@ Không tạo nested `AGENTS.md` cho layout chưa tồn tại. Khi scaffold sourc
 React renderer (sandboxed, no Node)
           │ typed IPC qua preload allowlist
           ▼
-Electron main ── Forge client ── HTTP Basic/token ── 127.0.0.1:<dynamic>
-      │                                              │
-      ├─ process supervisor ── Python child ─────────┘
+Electron main
+      ├─ Forge client ── backend token ──────────────┐
+      ├─ Classic proxy ── backend token ─────────────┴─ ASGI guard ── 127.0.0.1:<backend>
+      ├─ process supervisor ── Rust Job helper ── Python child (hosts backend)
       ├─ runtime/settings/log manager
       ├─ GPU monitor ── NVML/nvidia-smi/OS provider
       └─ VRAM safety controller
 
-Classic Forge ── isolated WebContentsView ── 127.0.0.1:<dynamic>
+Classic Forge ── isolated WebContentsView ── edge token/session injection ── 127.0.0.1:<proxy>
 ```
 
 Studio và Classic không chia sẻ preload. Studio không biết filesystem path thật trừ các value đã được main sanitize/authorize.
@@ -120,12 +121,14 @@ Studio và Classic không chia sẻ preload. Studio không biết filesystem pat
 - map API error thành domain error, không leak credential;
 - không tự quyết profile VRAM.
 
-### Bridge extension, nếu cần
+### Local bridge/adapter
 
-- versioned cùng Forge runtime compatibility matrix;
-- chỉ thêm health/version/capability hoặc secure token middleware/clean shutdown contract đã chứng minh thiếu;
+- versioned cùng Forge/Gradio runtime compatibility matrix;
+- outer ASGI guard phải được cài trước server bind, auth mọi HTTP/WebSocket route và cung cấp protected identity;
+- Electron-owned streaming proxy phục vụ riêng Classic session; Studio vẫn đi typed IPC → main client;
+- secret đi qua inherited anonymous pipe/handle từ signed Job helper, không argv/URL/log;
 - không chứa generation, GPU telemetry hoặc desktop settings;
-- có contract tests và fail closed; Classic vẫn chạy được nếu Studio báo incompatible.
+- có contract tests và fail closed; không tự fallback sang unauthenticated Forge.
 
 ### GPU monitor
 
@@ -247,7 +250,7 @@ ZIP được chọn. Runtime Python/Torch/CUDA wheels/Electron/assets là hàng 
 
 | Risk | Mitigation |
 |---|---|
-| Local API bị process/web page khác gọi | Loopback only, random credential, main-process client, secure bridge prototype, no CORS broadening |
+| Local API bị process/web page khác gọi | Outer ASGI auth pre-bind, Electron Classic proxy/session injection, per-launch credentials, exact Host/Origin, no CORS broadening |
 | Extension guest content thoát sandbox | Separate session/WebContentsView, no preload/Node, allowlist navigation, permission/download handlers |
 | Port race/collision | Explicit candidate + spawn probe + retry budget; không coi socket probe là reservation |
 | Process con còn sót | Job Object prototype, tracked PID tree, staged shutdown, kill-on-close |
@@ -262,7 +265,7 @@ ZIP được chọn. Runtime Python/Torch/CUDA wheels/Electron/assets là hàng 
 ADR phải được mở lại nếu một trong các điều sau xảy ra:
 
 - prototype không thể nhúng Classic ổn định trong secure `WebContentsView`;
-- native API/bridge không thể cung cấp local auth mà không sửa Forge core;
+- launcher adapter không thể cài outer ASGI guard ổn định trên Forge/Gradio thật mà không sửa Forge core;
 - process supervisor không quản lý được toàn process tree trên Windows mục tiêu;
 - Electron idle RAM hoặc package size vượt budget sản phẩm đã được stakeholder chốt và Tauri prototype chứng minh cải thiện đủ lớn;
 - Forge upstream thay Gradio/API/process architecture căn bản;
@@ -275,6 +278,6 @@ ADR phải được mở lại nếu một trong các điều sau xảy ra:
 - Khảo sát code: [architecture-assessment.md](architecture-assessment.md)
 - [Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security)
 - [Electron WebContentsView migration](https://www.electronjs.org/blog/migrate-to-webcontentsview)
+- [Secure local bridge/auth spike](../../desktop/prototypes/secure-forge-bridge/README.md)
 - [Tauri Windows prerequisites](https://v2.tauri.app/start/prerequisites/)
 - [Tauri WebView2 distribution modes](https://v2.tauri.app/distribute/windows-installer/)
-
