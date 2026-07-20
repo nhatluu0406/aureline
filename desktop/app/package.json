@@ -1,0 +1,58 @@
+{
+  "name": "forge-desktop",
+  "version": "0.1.0",
+  "description": "Production-oriented desktop shell for Stable Diffusion WebUI Forge",
+  "author": "Forge Desktop contributors",
+  "private": true,
+  "type": "module",
+  "main": "dist/electron/main.cjs",
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "build:helper": "node scripts/build-helper.mjs",
+    "build:renderer": "vite build",
+    "build:electron": "node scripts/build-electron.mjs",
+    "build": "npm run clean && npm run build:helper && npm run build:renderer && npm run build:electron",
+    "dev": "node scripts/dev.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build:helper && vitest run --config vitest.config.ts",
+    "smoke": "node scripts/electron-smoke.mjs",
+    "smoke:packaged": "node scripts/packaged-smoke.mjs",
+    "package:dir": "npm run build && electron-builder --dir --win --x64",
+    "verify": "npm run typecheck && npm test && npm run build && npm run smoke"
+  },
+  "dependencies": {
+    "lucide-react": "1.25.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "ws": "8.21.1",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@types/ws": "8.18.1",
+    "@playwright/test": "1.61.1",
+    "@vitejs/plugin-react": "6.0.3",
+    "electron": "43.1.1",
+    "electron-builder": "26.15.3",
+    "esbuild": "0.28.1",
+    "typescript": "5.9.3",
+    "vite": "8.1.5",
+    "vitest": "4.1.10"
+  },
+  "build": {
+    "appId": "dev.forgedesktop.shell",
+    "productName": "Forge Desktop",
+    "asar": true,
+    "directories": { "output": "release" },
+    "files": ["dist/**", "package.json"],
+    "extraResources": [
+      { "from": "runtime/job-helper/bin/job-owner-helper.exe", "to": "runtime/job-helper/job-owner-helper.exe" },
+      { "from": "runtime/forge-launch-adapter", "to": "runtime/forge-launch-adapter" },
+      { "from": "runtime-manifest.example.json", "to": "runtime-manifest.example.json" }
+    ],
+    "win": { "target": [{ "target": "dir", "arch": ["x64"] }] },
+    "artifactName": "Forge-Desktop-${version}-${arch}.${ext}"
+  }
+}

@@ -253,7 +253,7 @@ CPython embeddable distribution là tối giản và tài liệu chính thức n
 ## 15. Unknowns cần prototype
 
 - Startup/shutdown thật trên Windows GPU machine, exit code và thời gian cleanup sau interrupt/OOM.
-- Packaged Electron `WebContentsView` header injection cho HTTP/SSE/WebSocket, DOM/storage/CSP và third-party extension behavior.
+- Electron Milestone 1 đã xác minh `WebContentsView` header injection cho HTTP/SSE/WebSocket, DOM/storage và controlled extension. Gradio 4.40 ghi absolute backend origin vào HTML/JSON config cho theme/heartbeat; proxy phải rewrite exact origin trong bounded config response hoặc Classic session phải inject backend credential cho exact backend origin. Một `webRequest` event chỉ nên có một listener tổng hợp cho cả HTTP và WebSocket URL filters.
 - Real-Forge smoke xác nhận outer guard pre-bind, Classic proxy, HTML/local assets, API đại diện, Gradio POST+SSE queue, upload/file/range, UI reload và representative extension HTTP/WebSocket. Nó đồng thời phát hiện Gradio tự gọi `/startup-events` sau bind; adapter phải inject backend credential cho exact self-call, không public-allowlist route này.
 - Chính xác các write vào runtime root trong normal generation, extension install và UI reload.
 - Process tree thực tế và compatibility của Windows Job Object với Python, Git, extension subprocess.

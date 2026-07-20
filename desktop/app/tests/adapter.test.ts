@@ -1,0 +1,2 @@
+import { describe,expect,it } from "vitest";import { readFile } from "node:fs/promises";import { resolve } from "node:path";
+describe("launcher adapter",()=>{it("keeps the credential off argv/environment seams",async()=>{const source=await readFile(resolve(import.meta.dirname,"../runtime/forge-launch-adapter/secure_launcher.py"),"utf8");expect(source).toContain("Bootstrap.read(sys.stdin.buffer)");expect(source).not.toContain("os.environ[");expect(source).not.toContain("--api-auth")})});

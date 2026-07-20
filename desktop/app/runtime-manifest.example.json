@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "runtimeId": "forge-dev-cpu",
+  "platform": "win32",
+  "architecture": "x64",
+  "pythonExecutable": "../prototypes/real-forge-compatibility/.runtime/python-3.10.11/python.exe",
+  "forgeRoot": "../..",
+  "launcherAdapter": "runtime/forge-launch-adapter/secure_launcher.py",
+  "helperExecutable": "runtime/job-helper/bin/job-owner-helper.exe",
+  "forgeCommit": "dfdcbab685e57677014f05a3309b48cc87383167"
+}

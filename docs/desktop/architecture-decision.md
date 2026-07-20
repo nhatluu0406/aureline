@@ -30,7 +30,7 @@ Các boundary thực tế từ code:
 5. **Distribution:** Portable ZIP có nhiều file, không single EXE.
 6. **Communication:** Studio renderer dùng typed preload IPC; Electron main sở hữu Forge API client và backend credential.
 7. **Classic rendering:** isolated `WebContentsView` dùng authenticated Electron-owned loopback proxy và ephemeral session; child `BrowserWindow`/external browser chỉ là recovery fallback đã đánh giá lại theo auth policy.
-8. **Bridge:** local-auth và real-Forge smoke đã chứng minh native auth không bao phủ toàn surface. Runtime cần outer ASGI guard cực mỏng được cài pre-bind qua launcher adapter version-pinned; không dựa riêng vào `on_app_started`. Adapter phải authenticate exact Gradio `/startup-events` self-call và readiness phải ghép identity với protected capability probes.
+8. **Bridge:** local-auth và real-Forge smoke đã chứng minh native auth không bao phủ toàn surface. Runtime cần outer ASGI guard cực mỏng được cài pre-bind qua launcher adapter version-pinned; không dựa riêng vào `on_app_started`. Adapter phải authenticate exact Gradio `/startup-events` self-call và readiness phải ghép identity với protected capability probes. Classic proxy rewrite exact Gradio backend origin trong bounded HTML/JSON config; isolated session có exact-backend header injection như compatibility fallback cho absolute routes, không trao token cho page JavaScript.
 9. **Network:** Forge backend và Classic proxy đều bind explicit `127.0.0.1`, dynamic port, credential riêng mỗi launch; không LAN/share mặc định.
 10. **VRAM:** Forge tiếp tục quyết định model placement/offload; desktop orchestration chỉ telemetry, policy trước job, queue và recovery.
 
