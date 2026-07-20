@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { engineSnapshotSchema, IPC, logEventSchema, settingsSchema, type AurelineApi } from "../../packages/contracts/index.ts";
+import { engineSnapshotSchema, forgeConnectionResultSchema, generationRequestSchema, generationResultSchema, IPC, logEventSchema, settingsSchema, type AurelineApi } from "../../packages/contracts/index.ts";
 
 const api: AurelineApi = {
   app: { getInfo: async () => await ipcRenderer.invoke(IPC.appInfo), window: async (action) => await ipcRenderer.invoke(IPC.window, action) },
@@ -17,5 +17,9 @@ const api: AurelineApi = {
   classic: { show:async()=>await ipcRenderer.invoke(IPC.classicShow),hide:async()=>await ipcRenderer.invoke(IPC.classicHide),reload:async()=>await ipcRenderer.invoke(IPC.classicReload) },
   settings: { get:async()=>settingsSchema.parse(await ipcRenderer.invoke(IPC.settingsGet)),update:async(patch)=>settingsSchema.parse(await ipcRenderer.invoke(IPC.settingsUpdate,patch)) },
   runtime: { getSummary:async()=>await ipcRenderer.invoke(IPC.runtimeSummary) },
+  forge: {
+    testConnection:async(baseUrl)=>forgeConnectionResultSchema.parse(await ipcRenderer.invoke(IPC.forgeTestConnection,{baseUrl})),
+    generate:async(request)=>generationResultSchema.parse(await ipcRenderer.invoke(IPC.forgeGenerate,generationRequestSchema.parse(request))),
+  },
 };
 contextBridge.exposeInMainWorld("aureline", api);

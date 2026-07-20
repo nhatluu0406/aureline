@@ -6,7 +6,7 @@ Aureline is designed around refined creative workflows, efficient GPU usage, and
 
 ## Status
 
-Aureline is in active pre-release development. The repository contains a production-oriented desktop foundation, but it is not yet a complete image-generation product or a portable end-user release.
+Aureline is in active pre-release development. The desktop now includes a usable Studio text-to-image happy path for an already-running local Forge API, but it is not yet a portable end-user release.
 
 ## Vision
 
@@ -14,7 +14,8 @@ Aureline aims to provide a focused Windows creative environment without requirin
 
 ## Current capabilities
 
-- Electron and React application shell with Home, Engine, Classic Forge, Settings, and an honest Studio placeholder.
+- Premium dark-first Electron and React shell with Studio and Settings workspaces.
+- Typed local Forge connection testing and a real txt2img request flow with result, running, success, and recoverable failure states.
 - Light, dark, and system themes.
 - Forge engine start, stop, restart, readiness, and bounded redacted logs.
 - Windows process-tree ownership through a Rust Job Object helper.
@@ -24,7 +25,7 @@ Aureline aims to provide a focused Windows creative environment without requirin
 
 ## Planned capabilities
 
-- Studio generation workflows and typed generation contracts.
+- Advanced Studio workflows, queues, image editing, and model controls.
 - Model discovery, management, and download workflows.
 - GPU telemetry and calibrated VRAM safety profiles.
 - A fully materialized portable Forge runtime.
@@ -95,6 +96,8 @@ The current output is an unsigned unpacked shell with `release/win-unpacked/aure
 
 Runtime manifests are validated by Aureline and point to an external Python executable, Forge root, launcher adapter, and Job Object helper. Start from [`engine/manifests/runtime-manifest.example.json`](engine/manifests/runtime-manifest.example.json), keep machine-local paths untracked, and set `AURELINE_RUNTIME_MANIFEST` for development or smoke runs when needed.
 
+For the Studio happy path, start a compatible Forge instance with its normal API enabled, open **Settings**, enter its loopback URL (default `http://127.0.0.1:7860`), and test the connection. Studio sends txt2img requests through Electron main; the renderer never contacts localhost directly.
+
 ## Local Forge reference
 
 Developers may optionally clone the [official upstream Forge repository](https://github.com/lllyasviel/stable-diffusion-webui-forge) to `.reference/stable-diffusion-webui-forge`. The checkout is local-only, ignored by Git, must not be committed or modified for Aureline work, and is not production source. UI-only work does not require it. Production runtimes are pinned and materialized separately through Aureline runtime manifests and engine tooling.
@@ -115,7 +118,7 @@ Aureline-owned source is available under the repository's [MIT License](LICENSE)
 
 ## Roadmap
 
-The next proposed task is the Aureline Design Foundation: brand direction, production logo, design tokens, premium application shell, and first Studio workspace layout. See the [roadmap](docs/product/roadmap.md).
+Studio currently targets one image at a time. Model management, galleries, editing, advanced conditioning, portable runtime bundling, and signed releases remain out of scope. See the [roadmap](docs/product/roadmap.md).
 
 ## Contributing
 

@@ -1,0 +1,9 @@
+import { describe, expect, it, vi } from "vitest";
+import { ForgeApiClient, normalizeLoopbackUrl } from "../engine/adapter/forge-api-client.ts";
+const request={baseUrl:"http://127.0.0.1:7860",prompt:"quiet alpine lake",negativePrompt:"",width:512,height:512,steps:18,cfgScale:7,seed:-1,sampler:"Euler a"};
+describe("ForgeApiClient",()=>{
+  it("accepts loopback URLs and rejects remote or credentialed targets",()=>{expect(normalizeLoopbackUrl("http://localhost:7860/")).toBe("http://localhost:7860");expect(()=>normalizeLoopbackUrl("https://example.com")).toThrow(/loopback/);expect(()=>normalizeLoopbackUrl("http://user:pass@127.0.0.1:7860")).toThrow(/loopback/)});
+  it("tests the standard Forge API",async()=>{const fetchMock=vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([{name:"Euler a"}]),{status:200}));await expect(new ForgeApiClient(fetchMock).testConnection(request.baseUrl)).resolves.toEqual({ok:true,message:"Connected to the local Forge API."});expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:7860/sdapi/v1/samplers",expect.objectContaining({signal:expect.any(AbortSignal)}))});
+  it("maps txt2img output to an image data URL",async()=>{const fetchMock=vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({images:["cG5n"],info:JSON.stringify({seed:42})}),{status:200}));await expect(new ForgeApiClient(fetchMock).generate(request)).resolves.toEqual({ok:true,image:"data:image/png;base64,cG5n",seed:42});const [,options]=fetchMock.mock.calls[0]!;expect(JSON.parse(String(options?.body))).toMatchObject({prompt:request.prompt,negative_prompt:"",cfg_scale:7,batch_size:1})});
+  it("returns a recoverable failure when Forge is unavailable",async()=>{const fetchMock=vi.fn<typeof fetch>().mockRejectedValue(new TypeError("fetch failed"));await expect(new ForgeApiClient(fetchMock).generate(request)).resolves.toMatchObject({ok:false,message:expect.stringContaining("Could not reach")})});
+});

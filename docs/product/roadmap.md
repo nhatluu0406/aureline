@@ -355,8 +355,8 @@ Verification levels:
 
 **Verification level:** L1–L4 bắt buộc; L5 cho generation release claim.
 
-## 2. Task kế tiếp được đề xuất
+## 2. Current delivery boundary
 
-**Aureline Design Foundation — brand direction, production logo, design tokens, premium application shell, and first Studio workspace layout.**
+The premium application shell, first Studio workspace, and focused one-image txt2img happy path are implemented. The next increments should stay small: model selection, progress/cancel, and durable output handling can each be delivered independently.
 
-Task này chưa được triển khai. Studio generation, GPU/model inference và full bundled runtime vẫn nằm ngoài trạng thái hiện tại.
+GPU/model compatibility certification and the full bundled runtime remain outside the current product state.

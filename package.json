@@ -53,7 +53,7 @@
       { "from": "engine/adapter", "to": "engine/adapter" },
       { "from": "engine/manifests/runtime-manifest.example.json", "to": "engine/manifests/runtime-manifest.example.json" }
     ],
-    "win": { "target": [{ "target": "dir", "arch": ["x64"] }] },
+    "win": { "icon": "app/resources/aureline-icon.png", "target": [{ "target": "dir", "arch": ["x64"] }] },
     "artifactName": "Aureline-${version}-${arch}.${ext}"
   }
 }

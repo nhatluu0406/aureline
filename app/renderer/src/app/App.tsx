@@ -1,35 +1,178 @@
-import { useEffect, useMemo, useState } from "react";
-import { Activity, Box, ChevronRight, CircleGauge, Home, Maximize2, Minimize2, Moon, Play, RefreshCw, Settings, Square, StopCircle, Sun, Terminal, WandSparkles, X } from "lucide-react";
-import type { DesktopSettings, EngineSnapshot, LogEvent } from "../../../../packages/contracts/index.ts";
+import { useEffect, useRef, useState } from "react";
+import { Aperture, Check, CircleAlert, Image as ImageIcon, LoaderCircle, Maximize2, Minimize2, Moon, PlugZap, Settings, SlidersHorizontal, Sparkles, Sun, WandSparkles, X } from "lucide-react";
+import type { DesktopSettings } from "../../../../packages/contracts/index.ts";
 
-type Page = "home" | "studio" | "classic" | "engine" | "settings";
-const fallback:EngineSnapshot={state:"not_configured",phase:"Đang kết nối ứng dụng",startedAt:null,uptimeMs:0,readiness:"unknown",backendProtected:false,runtimeId:null,error:null};
-const labels:Record<EngineSnapshot["state"],string>={not_configured:"Chưa cấu hình",stopped:"Đã dừng",starting:"Đang khởi động",ready:"Sẵn sàng",stopping:"Đang dừng",failed:"Cần chú ý"};
-const nav:Array<{id:Page;label:string;icon:typeof Home}>=[{id:"home",label:"Home",icon:Home},{id:"studio",label:"Studio",icon:WandSparkles},{id:"classic",label:"Classic Forge",icon:Box},{id:"engine",label:"Engine",icon:CircleGauge},{id:"settings",label:"Settings",icon:Settings}];
-function duration(ms:number):string{const seconds=Math.floor(ms/1000);if(seconds<60)return `${seconds}s`;const minutes=Math.floor(seconds/60);return `${minutes}m ${seconds%60}s`}
+type Page = "studio" | "settings";
+type Connection = "unknown" | "testing" | "connected" | "disconnected";
+type Generation = "idle" | "running" | "success" | "error";
 
-export function App(){
-  const [page,setPage]=useState<Page>("home"),[engine,setEngine]=useState(fallback),[logs,setLogs]=useState<LogEvent[]>([]),[settings,setSettings]=useState<DesktopSettings|null>(null),[busy,setBusy]=useState(false);
-  useEffect(()=>{void window.aureline.engine.getState().then(setEngine);void window.aureline.logs.getRecent().then(setLogs);void window.aureline.settings.get().then(setSettings);const offState=window.aureline.engine.subscribe(setEngine),offLog=window.aureline.logs.subscribe(event=>setLogs(value=>[...value.slice(-99),event]));return()=>{offState();offLog()}},[]);
-  useEffect(()=>{if(page!=="classic")void window.aureline.classic.hide();else if(engine.state==="ready")void window.aureline.classic.show().catch(()=>setPage("engine"));},[page,engine.state]);
-  useEffect(()=>{if(!settings)return;document.documentElement.dataset.theme=settings.theme;if(settings.theme==="system")document.documentElement.dataset.systemDark=String(matchMedia("(prefers-color-scheme: dark)").matches)},[settings]);
-  const action=async(kind:"start"|"stop"|"restart")=>{setBusy(true);try{setEngine(await window.aureline.engine[kind]())}finally{setBusy(false)}};
-  const select=(next:Page)=>{setPage(next)};
-  return <div className="app">
-    <header className="titlebar"><div className="brand-mark"><Activity size={16}/></div><span>Aureline</span><div className="drag"/><div className="window-actions"><button aria-label="Thu nhỏ" onClick={()=>void window.aureline.app.window("minimize")}><Minimize2/></button><button aria-label="Phóng to" onClick={()=>void window.aureline.app.window("toggle-maximize")}><Maximize2/></button><button className="close" aria-label="Đóng" onClick={()=>void window.aureline.app.window("close")}><X/></button></div></header>
-    <aside className="sidebar"><div className="product"><div className="logo">A</div><div><strong>Aureline</strong><span>Creative studio</span></div></div><nav>{nav.map(item=><button key={item.id} className={page===item.id?"active":""} onClick={()=>select(item.id)}><item.icon/><span>{item.label}</span>{item.id==="studio"&&<small>Sắp có</small>}</button>)}</nav><div className="sidebar-status"><Status state={engine.state}/><div><strong>{labels[engine.state]}</strong><span>{engine.phase}</span></div></div></aside>
-    <main className="content">{page==="home"&&<HomePage engine={engine} logs={logs} busy={busy} action={action} openClassic={()=>select("classic")}/>} {page==="studio"&&<StudioPage/>} {page==="classic"&&<ClassicPage engine={engine} busy={busy} action={action}/>} {page==="engine"&&<EnginePage engine={engine} logs={logs} busy={busy} action={action}/>} {page==="settings"&&settings&&<SettingsPage value={settings} onChange={async patch=>{const next=await window.aureline.settings.update(patch);setSettings(next)}}/>}</main>
+export function App() {
+  const [page, setPage] = useState<Page>("studio");
+  const [settings, setSettings] = useState<DesktopSettings | null>(null);
+  const [connection, setConnection] = useState<Connection>("unknown");
+  const [connectionMessage, setConnectionMessage] = useState("Connection not tested");
+  const [generation, setGeneration] = useState<Generation>("idle");
+  const [generationMessage, setGenerationMessage] = useState("");
+  const [image, setImage] = useState<string | null>(null);
+  const [resultSeed, setResultSeed] = useState<number | null>(null);
+  const hydrated = useRef(false);
+
+  useEffect(() => {
+    void window.aureline.settings.get().then(value => { setSettings(value); hydrated.current = true; });
+  }, []);
+
+  useEffect(() => {
+    if (!settings) return;
+    document.documentElement.dataset.theme = settings.theme;
+    const query = matchMedia("(prefers-color-scheme: dark)");
+    const sync = () => { document.documentElement.dataset.systemDark = String(query.matches); };
+    sync(); query.addEventListener("change", sync); return () => query.removeEventListener("change", sync);
+  }, [settings?.theme]);
+
+  useEffect(() => {
+    if (!settings || !hydrated.current) return;
+    const timer = window.setTimeout(() => { void window.aureline.settings.update({ studio: settings.studio }); }, 450);
+    return () => window.clearTimeout(timer);
+  }, [settings?.studio]);
+
+  useEffect(() => {
+    if (!settings || !hydrated.current) return;
+    const timer = window.setTimeout(() => { void window.aureline.settings.update({ forgeBaseUrl: settings.forgeBaseUrl }); }, 450);
+    return () => window.clearTimeout(timer);
+  }, [settings?.forgeBaseUrl]);
+
+  if (!settings) return <div className="boot"><div className="aureline-glyph"><Sparkles /></div><span>Opening Aureline</span></div>;
+
+  const updateStudio = <K extends keyof DesktopSettings["studio"]>(key: K, value: DesktopSettings["studio"][K]) => {
+    setSettings(current => current ? { ...current, studio: { ...current.studio, [key]: value } } : current);
+  };
+  const persist = async (patch: Partial<Omit<DesktopSettings, "schemaVersion">>) => {
+    const next = await window.aureline.settings.update(patch); setSettings(next); return next;
+  };
+  const testConnection = async () => {
+    setConnection("testing"); setConnectionMessage("Checking Forge API…");
+    const result = await window.aureline.forge.testConnection(settings.forgeBaseUrl);
+    setConnection(result.ok ? "connected" : "disconnected"); setConnectionMessage(result.message);
+  };
+  const generate = async () => {
+    const prompt = settings.studio.prompt.trim();
+    if (!prompt) { setGeneration("error"); setGenerationMessage("Add a prompt before generating."); return; }
+    setGeneration("running"); setGenerationMessage("Forge is creating your image…");
+    await window.aureline.settings.update({ studio: settings.studio });
+    const result = await window.aureline.forge.generate({ baseUrl: settings.forgeBaseUrl, ...settings.studio, prompt });
+    if (result.ok) { setImage(result.image); setResultSeed(result.seed); setGeneration("success"); setGenerationMessage("Generation complete"); setConnection("connected"); }
+    else { setGeneration("error"); setGenerationMessage(result.message); if (connection === "unknown") setConnection("disconnected"); }
+  };
+
+  return <div className="app-shell">
+    <header className="titlebar">
+      <div className="title-brand"><div className="mini-glyph"><Sparkles /></div><strong>Aureline</strong><span>/</span><span>{page === "studio" ? "Studio" : "Settings"}</span></div>
+      <div className="title-drag" />
+      <div className="window-actions">
+        <button aria-label="Minimize" onClick={() => void window.aureline.app.window("minimize")}><Minimize2 /></button>
+        <button aria-label="Maximize" onClick={() => void window.aureline.app.window("toggle-maximize")}><Maximize2 /></button>
+        <button className="close" aria-label="Close" onClick={() => void window.aureline.app.window("close")}><X /></button>
+      </div>
+    </header>
+
+    <aside className="rail" aria-label="Main navigation">
+      <div className="aureline-glyph" title="Aureline"><Sparkles /></div>
+      <nav>
+        <button className={page === "studio" ? "active" : ""} onClick={() => setPage("studio")} aria-label="Studio"><WandSparkles /><span>Studio</span></button>
+        <button className={page === "settings" ? "active" : ""} onClick={() => setPage("settings")} aria-label="Settings"><Settings /><span>Settings</span></button>
+      </nav>
+      <div className={`connection-beacon ${connection}`} title={connectionMessage} />
+    </aside>
+
+    {page === "studio" ? <Studio
+      value={settings.studio}
+      connection={connection}
+      generation={generation}
+      message={generationMessage}
+      image={image}
+      resultSeed={resultSeed}
+      onChange={updateStudio}
+      onGenerate={() => void generate()}
+      onOpenSettings={() => setPage("settings")}
+    /> : <SettingsView
+      value={settings}
+      connection={connection}
+      connectionMessage={connectionMessage}
+      onChange={persist}
+      onBaseUrlChange={forgeBaseUrl => { setSettings(current => current ? { ...current, forgeBaseUrl } : current); setConnection("unknown"); setConnectionMessage("Connection not tested"); }}
+      onTest={() => void testConnection()}
+      onDone={() => setPage("studio")}
+    />}
   </div>;
 }
-function Status({state}:{state:EngineSnapshot["state"]}){return <span className={`status-dot ${state}`} aria-hidden="true"/>}
-function PageTitle({eyebrow,title,description,actions}:{eyebrow:string;title:string;description:string;actions?:React.ReactNode}){return <div className="page-title"><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1><p>{description}</p></div>{actions&&<div className="page-actions">{actions}</div>}</div>}
-function EngineActions({engine,busy,action}:{engine:EngineSnapshot;busy:boolean;action:(kind:"start"|"stop"|"restart")=>Promise<void>}){return <>{engine.state!=="ready"&&engine.state!=="starting"?<button className="primary" disabled={busy||engine.state==="not_configured"} onClick={()=>void action("start")}><Play/>Start Forge</button>:<button disabled={busy} onClick={()=>void action("stop")}><StopCircle/>Stop</button>}<button disabled={busy||engine.state!=="ready"} onClick={()=>void action("restart")}><RefreshCw/>Restart</button></>}
-function HomePage({engine,logs,busy,action,openClassic}:{engine:EngineSnapshot;logs:LogEvent[];busy:boolean;action:(k:"start"|"stop"|"restart")=>Promise<void>;openClassic:()=>void}){return <><PageTitle eyebrow="Workspace" title="Aureline" description="Studio sáng tạo AI local-first dành cho quy trình hình ảnh trên Windows." actions={<EngineActions engine={engine} busy={busy} action={action}/>}/><section className="hero"><div><span className="hero-kicker"><Status state={engine.state}/>{labels[engine.state]}</span><h2>{engine.state==="ready"?"Engine đã sẵn sàng.":engine.state==="not_configured"?"Kết nối runtime để bắt đầu.":"Forge đang ở trạng thái kiểm soát."}</h2><p>{engine.phase}</p><button className="text-button" disabled={engine.state!=="ready"} onClick={openClassic}>Mở Classic Forge <ChevronRight/></button></div><div className="engine-orbit"><Activity/><span>{engine.backendProtected?"Protected":"Offline"}</span></div></section><section className="metric-grid"><Metric icon={Terminal} label="Runtime" value={engine.runtimeId??"Chưa kết nối"} note="Python + Forge manifest"/><Metric icon={CircleGauge} label="Readiness" value={engine.readiness==="ready"?"Đã xác minh":"Chưa sẵn sàng"} note="Identity + capability"/><Metric icon={Activity} label="GPU" value="Chưa kết nối" note="Telemetry ở milestone sau"/></section><ActivityList logs={logs.slice(-4).reverse()}/></>}
-function Metric({icon:Icon,label,value,note}:{icon:typeof Home;label:string;value:string;note:string}){return <article className="metric"><div className="icon"><Icon/></div><span>{label}</span><strong>{value}</strong><small>{note}</small></article>}
-function ActivityList({logs}:{logs:LogEvent[]}){return <section className="panel"><div className="panel-title"><div><span className="eyebrow">Recent activity</span><h3>Engine timeline</h3></div></div>{logs.length===0?<div className="empty"><Activity/><p>Hoạt động engine sẽ xuất hiện tại đây.</p></div>:<div className="activity-list">{logs.map((log,index)=><div key={`${log.timestamp}-${index}`}><span className={`level ${log.level}`}/><time>{new Date(log.timestamp).toLocaleTimeString()}</time><p>{log.message}</p></div>)}</div>}</section>}
-function StudioPage(){return <><PageTitle eyebrow="Studio" title="Không gian sáng tạo đang được chuẩn bị" description="Milestone này tập trung vào nền tảng engine và Classic Forge. Generation workspace sẽ đến ở bước tiếp theo."/><div className="coming"><WandSparkles/><span>Studio foundation</span><h2>Prompt workspace, model discovery và txt2img contract</h2><p>Chưa có dữ liệu giả hoặc generation action trong bản này.</p></div></>}
-function ClassicPage({engine,busy,action}:{engine:EngineSnapshot;busy:boolean;action:(k:"start"|"stop"|"restart")=>Promise<void>}){return <><div className="classic-toolbar"><div><span className="eyebrow">Compatibility mode</span><h1>Classic Forge</h1><p>{engine.state==="ready"?"Giao diện Forge gốc đang chạy trong isolated WebContentsView.":engine.phase}</p></div><div className="page-actions"><button disabled={engine.state!=="ready"} onClick={()=>void window.aureline.classic.reload()}><RefreshCw/>Reload</button><button disabled={busy} onClick={()=>void action(engine.state==="ready"?"restart":"start")}><Play/>{engine.state==="ready"?"Restart engine":"Start engine"}</button></div></div>{engine.state!=="ready"&&<div className="classic-state"><Box/><h2>{engine.state==="starting"?"Forge đang khởi động":"Classic Forge chưa sẵn sàng"}</h2><p>{engine.phase}</p></div>}</>}
-function EnginePage({engine,logs,busy,action}:{engine:EngineSnapshot;logs:LogEvent[];busy:boolean;action:(k:"start"|"stop"|"restart")=>Promise<void>}){return <><PageTitle eyebrow="Runtime control" title="Engine" description="Theo dõi lifecycle, protected readiness và diagnostics đã redaction." actions={<EngineActions engine={engine} busy={busy} action={action}/>}/><section className="engine-grid"><div className="panel engine-card"><span className="eyebrow">Current state</span><div className="state-line"><Status state={engine.state}/><h2>{labels[engine.state]}</h2></div><p>{engine.phase}</p>{engine.error&&<div className="error-box"><strong>{engine.error.message}</strong><span>{engine.error.code}</span>{engine.error.details&&<details><summary>Technical details</summary><pre>{engine.error.details}</pre></details>}</div>}</div><div className="panel facts"><Fact label="Uptime" value={engine.startedAt?duration(engine.uptimeMs):"—"}/><Fact label="Readiness" value={engine.readiness}/><Fact label="Backend guard" value={engine.backendProtected?"Active":"Inactive"}/><Fact label="Runtime" value={engine.runtimeId??"Not configured"}/></div></section><section className="panel logs"><div className="panel-title"><div><span className="eyebrow">Bounded diagnostics</span><h3>Live logs</h3></div><Terminal/></div><div className="log-scroll">{logs.length===0?<p className="muted">Chưa có log.</p>:logs.slice(-80).map((log,index)=><div key={`${log.timestamp}-${index}`}><time>{new Date(log.timestamp).toLocaleTimeString()}</time><span className={log.level}>{log.level}</span><p>{log.message}</p></div>)}</div></section></>}
-function Fact({label,value}:{label:string;value:string}){return <div><span>{label}</span><strong>{value}</strong></div>}
-function SettingsPage({value,onChange}:{value:DesktopSettings;onChange:(patch:Partial<Omit<DesktopSettings,"schemaVersion">>)=>Promise<void>}){return <><PageTitle eyebrow="Preferences" title="Settings" description="Thiết lập shell được lưu atomic trong user data; runtime path chỉ đọc."/><section className="settings-list"><Setting title="Theme" description="Theo hệ thống hoặc chọn giao diện cố định."><div className="segmented">{(["system","light","dark"] as const).map(item=><button className={value.theme===item?"active":""} onClick={()=>void onChange({theme:item})} key={item}>{item==="light"?<Sun/>:item==="dark"?<Moon/>:<Settings/>}{item}</button>)}</div></Setting><Setting title="Launch Forge when app starts" description="Khởi động engine sau khi shell sẵn sàng."><input type="checkbox" checked={value.launchOnStart} onChange={event=>void onChange({launchOnStart:event.target.checked})}/></Setting><Setting title="Close behavior" description="Milestone 1 luôn cleanup engine trước khi thoát."><select value={value.closeBehavior} onChange={event=>void onChange({closeBehavior:event.target.value as DesktopSettings["closeBehavior"]})}><option value="stop-and-quit">Stop engine and quit</option><option value="quit">Quit</option></select></Setting><Setting title="Log level" description="Diagnostics được giới hạn và redaction."><select value={value.logLevel} onChange={event=>void onChange({logLevel:event.target.value as DesktopSettings["logLevel"]})}><option value="info">Info</option><option value="debug">Debug</option></select></Setting><Setting title="Advanced" description="Runtime management và release channels sẽ có ở milestone sau."><span className="badge">Sắp có</span></Setting></section></>}
-function Setting({title,description,children}:{title:string;description:string;children:React.ReactNode}){return <div className="setting"><div><strong>{title}</strong><p>{description}</p></div>{children}</div>}
+
+type StudioProps = {
+  value: DesktopSettings["studio"];
+  connection: Connection;
+  generation: Generation;
+  message: string;
+  image: string | null;
+  resultSeed: number | null;
+  onChange: <K extends keyof DesktopSettings["studio"]>(key: K, value: DesktopSettings["studio"][K]) => void;
+  onGenerate: () => void;
+  onOpenSettings: () => void;
+};
+
+function Studio({ value, connection, generation, message, image, resultSeed, onChange, onGenerate, onOpenSettings }: StudioProps) {
+  const running = generation === "running";
+  return <main className="studio-workspace">
+    <section className="control-panel">
+      <div className="workspace-heading"><div><span className="eyebrow">Create</span><h1>New image</h1></div><Aperture /></div>
+      <div className="field-group">
+        <label htmlFor="negative">Negative prompt</label>
+        <textarea id="negative" rows={3} value={value.negativePrompt} placeholder="What should the image avoid?" onChange={event => onChange("negativePrompt", event.target.value)} />
+      </div>
+      <div className="section-label"><SlidersHorizontal /><span>Image settings</span></div>
+      <div className="field-grid">
+        <NumberField label="Width" value={value.width} min={256} max={2048} step={64} onChange={number => onChange("width", number)} />
+        <NumberField label="Height" value={value.height} min={256} max={2048} step={64} onChange={number => onChange("height", number)} />
+        <NumberField label="Steps" value={value.steps} min={1} max={150} onChange={number => onChange("steps", number)} />
+        <NumberField label="CFG scale" value={value.cfgScale} min={1} max={30} step={0.5} onChange={number => onChange("cfgScale", number)} />
+      </div>
+      <div className="field-group"><label htmlFor="sampler">Sampler</label><select id="sampler" value={value.sampler} onChange={event => onChange("sampler", event.target.value)}><option>Euler a</option><option>Euler</option><option>DPM++ 2M</option><option>DPM++ 2M Karras</option><option>DPM++ SDE Karras</option></select></div>
+      <div className="field-group"><label htmlFor="seed">Seed <span>−1 for random</span></label><input id="seed" type="number" min={-1} max={2147483647} value={value.seed} onChange={event => onChange("seed", Number(event.target.value))} /></div>
+      <button className={`connection-card ${connection}`} onClick={onOpenSettings}>
+        <span className="connection-icon"><PlugZap /></span><span><strong>{connection === "connected" ? "Forge connected" : "Connect Forge"}</strong><small>{connection === "connected" ? "Local API ready" : "Configure local API"}</small></span><span className="connection-dot" />
+      </button>
+    </section>
+
+    <section className="creation-stage">
+      <div className="stage-topbar"><div><span className="eyebrow">Canvas</span><strong>{image ? "Latest generation" : "Preview"}</strong></div>{resultSeed !== null && <span className="seed-chip">Seed {resultSeed}</span>}</div>
+      <div className={`canvas ${generation}`}>
+        {image ? <img src={image} alt="Generated result" /> : <div className="canvas-empty"><div className="empty-icon"><ImageIcon /></div><h2>Your next idea starts here</h2><p>Describe an image below, connect a local Forge API, and generate.</p></div>}
+        {running && <div className="generating-overlay"><LoaderCircle /><strong>Creating your image</strong><span>This can take a moment on local hardware.</span></div>}
+      </div>
+      <div className="composer">
+        <label htmlFor="prompt">Prompt</label>
+        <textarea id="prompt" rows={3} autoFocus value={value.prompt} placeholder="Describe the image you want to create…" onChange={event => onChange("prompt", event.target.value)} onKeyDown={event => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !running) onGenerate(); }} />
+        <div className="composer-footer">
+          <div className={`generation-status ${generation}`}>{generation === "success" ? <Check /> : generation === "error" ? <CircleAlert /> : <Sparkles />}<span>{message || "Ctrl + Enter to generate"}</span></div>
+          <button className="generate-button" disabled={running || !value.prompt.trim()} onClick={onGenerate}>{running ? <LoaderCircle className="spin" /> : <Sparkles />}{running ? "Generating" : "Generate"}</button>
+        </div>
+      </div>
+    </section>
+  </main>;
+}
+
+function NumberField({ label, value, min, max, step = 1, onChange }: { label: string; value: number; min: number; max: number; step?: number; onChange: (value: number) => void }) {
+  return <div className="field-group"><label>{label}</label><input type="number" value={value} min={min} max={max} step={step} onChange={event => onChange(Number(event.target.value))} /></div>;
+}
+
+function SettingsView({ value, connection, connectionMessage, onChange, onBaseUrlChange, onTest, onDone }: { value: DesktopSettings; connection: Connection; connectionMessage: string; onChange: (patch: Partial<Omit<DesktopSettings, "schemaVersion">>) => Promise<DesktopSettings>; onBaseUrlChange: (value: string) => void; onTest: () => void; onDone: () => void }) {
+  return <main className="settings-page">
+    <header className="settings-header"><div><span className="eyebrow">Aureline</span><h1>Settings</h1><p>Connect your local creative engine and tune the application.</p></div><button className="secondary-button" onClick={onDone}>Done</button></header>
+    <section className="settings-card forge-settings">
+      <div className="settings-icon"><PlugZap /></div><div className="settings-copy"><h2>Local Forge API</h2><p>Aureline connects only to Forge running on this computer. Start Forge with API access enabled, then test the connection.</p>
+        <label htmlFor="forge-url">Base URL</label><div className="url-row"><input id="forge-url" value={value.forgeBaseUrl} placeholder="http://127.0.0.1:7860" onChange={event => onBaseUrlChange(event.target.value)} /><button className="primary-button" disabled={connection === "testing"} onClick={onTest}>{connection === "testing" ? <LoaderCircle className="spin" /> : <PlugZap />}Test connection</button></div>
+        <div className={`connection-result ${connection}`}>{connection === "connected" ? <Check /> : connection === "disconnected" ? <CircleAlert /> : <span className="connection-dot" />}<span>{connectionMessage}</span></div>
+      </div>
+    </section>
+    <section className="settings-card compact"><div className="settings-icon"><Sun /></div><div className="settings-copy"><h2>Appearance</h2><p>Choose the surface that best fits your workspace.</p><div className="theme-picker">{(["dark", "light", "system"] as const).map(theme => <button key={theme} className={value.theme === theme ? "active" : ""} onClick={() => void onChange({ theme })}>{theme === "dark" ? <Moon /> : theme === "light" ? <Sun /> : <Settings />}{theme}</button>)}</div></div></section>
+    <p className="settings-note">Forge remains a separate local runtime. Aureline does not bundle models or upload prompts.</p>
+  </main>;
+}

@@ -35,6 +35,17 @@ export const settingsSchema = z.object({
   launchOnStart: z.boolean(),
   closeBehavior: z.enum(["quit", "stop-and-quit"]),
   logLevel: z.enum(["info", "debug"]),
+  forgeBaseUrl: z.string().max(240),
+  studio: z.object({
+    prompt: z.string().max(4_000),
+    negativePrompt: z.string().max(4_000),
+    width: z.number().int().min(256).max(2_048),
+    height: z.number().int().min(256).max(2_048),
+    steps: z.number().int().min(1).max(150),
+    cfgScale: z.number().min(1).max(30),
+    seed: z.number().int().min(-1).max(2_147_483_647),
+    sampler: z.string().min(1).max(120),
+  }),
 });
 export type DesktopSettings = z.infer<typeof settingsSchema>;
 
@@ -42,6 +53,23 @@ export const settingsPatchSchema = settingsSchema.omit({ schemaVersion: true }).
 
 export type AppInfo = { version: string; platform: NodeJS.Platform; packaged: boolean };
 export type RuntimeSummary = { configured: boolean; runtimeId: string | null; forgeCommit: string | null; description: string };
+
+export const forgeConnectionRequestSchema = z.object({ baseUrl: z.string().min(1).max(240) }).strict();
+export const forgeConnectionResultSchema = z.discriminatedUnion("ok", [
+  z.object({ ok: z.literal(true), message: z.string().max(240) }),
+  z.object({ ok: z.literal(false), message: z.string().max(500) }),
+]);
+export type ForgeConnectionResult = z.infer<typeof forgeConnectionResultSchema>;
+
+export const generationRequestSchema = settingsSchema.shape.studio.extend({
+  baseUrl: z.string().min(1).max(240),
+}).strict();
+export type GenerationRequest = z.infer<typeof generationRequestSchema>;
+export const generationResultSchema = z.discriminatedUnion("ok", [
+  z.object({ ok: z.literal(true), image: z.string().startsWith("data:image/"), seed: z.number().int().nullable() }),
+  z.object({ ok: z.literal(false), message: z.string().max(500) }),
+]);
+export type GenerationResult = z.infer<typeof generationResultSchema>;
 
 export type AurelineApi = {
   app: { getInfo(): Promise<AppInfo>; window(action: "minimize" | "toggle-maximize" | "close"): Promise<void> };
@@ -56,6 +84,10 @@ export type AurelineApi = {
   classic: { show(): Promise<void>; hide(): Promise<void>; reload(): Promise<void> };
   settings: { get(): Promise<DesktopSettings>; update(patch: Partial<Omit<DesktopSettings, "schemaVersion">>): Promise<DesktopSettings> };
   runtime: { getSummary(): Promise<RuntimeSummary> };
+  forge: {
+    testConnection(baseUrl: string): Promise<ForgeConnectionResult>;
+    generate(request: GenerationRequest): Promise<GenerationResult>;
+  };
 };
 
 export const IPC = {
@@ -64,4 +96,5 @@ export const IPC = {
   logsGet: "aureline:logs:get", logEvent: "aureline:logs:event",
   classicShow: "aureline:classic:show", classicHide: "aureline:classic:hide", classicReload: "aureline:classic:reload",
   settingsGet: "aureline:settings:get", settingsUpdate: "aureline:settings:update", runtimeSummary: "aureline:runtime:get-summary",
+  forgeTestConnection: "aureline:forge:test-connection", forgeGenerate: "aureline:forge:generate",
 } as const;
