@@ -1,0 +1,55 @@
+# Environment and local credentials
+.env
+.env.*
+!.env.example
+
+# Node / Electron
+node_modules/
+dist/
+build/
+release/
+out/
+coverage/
+*.tsbuildinfo
+*.asar
+*.blockmap
+
+# Rust build output (source under native/job-owner remains tracked)
+target/
+native/job-owner/bin/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Runtime and machine-local state
+.runtime/
+.local/
+engine/.runtime/
+engine/.cache/
+engine/manifests/runtime-manifest.local.json
+
+# Models, outputs, caches, and generated artifacts
+/models/
+/outputs/
+/cache/
+/artifacts/
+
+# Logs and test artifacts
+/logs/
+*.log
+test-results/
+playwright-report/
+.smoke/
+test-artifacts/
+
+# IDE and OS files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
