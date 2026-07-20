@@ -1,0 +1,28 @@
+{
+  "name": "@forge-desktop/secure-forge-bridge-spike",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "demo": "node --experimental-transform-types src/demo.ts",
+    "typecheck": "tsc --noEmit",
+    "test:node": "node --experimental-transform-types --test --test-concurrency=1 test/secure-bridge.test.ts",
+    "test:python": "python -m unittest bridge/test_secure_bridge.py",
+    "test": "npm run test:node && npm run test:python",
+    "secret-scan": "node scripts/secret-scan.mjs",
+    "verify": "npm run clean && npm run typecheck && npm test && npm run demo && npm run secret-scan"
+  },
+  "dependencies": {
+    "ws": "8.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/ws": "8.18.1",
+    "typescript": "5.9.3"
+  }
+}
+

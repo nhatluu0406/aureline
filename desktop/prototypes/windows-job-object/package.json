@@ -1,0 +1,23 @@
+{
+  "name": "@forge-desktop/windows-job-object-spike",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "build:helper": "node scripts/build-helper.mjs",
+    "clean": "node scripts/clean.mjs",
+    "demo": "node --experimental-transform-types src/demo.ts",
+    "predemo": "npm run build:helper",
+    "pretest": "npm run build:helper",
+    "test": "node --experimental-transform-types --test --test-concurrency=1 test/job-object.test.ts",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run clean && npm run build:helper && npm run typecheck && npm test && npm run demo"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3"
+  }
+}
