@@ -30,7 +30,7 @@ Các boundary thực tế từ code:
 5. **Distribution:** Portable ZIP có nhiều file, không single EXE.
 6. **Communication:** Studio renderer dùng typed preload IPC; Electron main sở hữu Forge API client và backend credential.
 7. **Classic rendering:** isolated `WebContentsView` dùng authenticated Electron-owned loopback proxy và ephemeral session; child `BrowserWindow`/external browser chỉ là recovery fallback đã đánh giá lại theo auth policy.
-8. **Bridge:** local-auth spike đã chứng minh native auth không bao phủ toàn surface. Runtime cần outer ASGI guard cực mỏng được cài pre-bind qua launcher adapter version-pinned; không dựa riêng vào `on_app_started`.
+8. **Bridge:** local-auth và real-Forge smoke đã chứng minh native auth không bao phủ toàn surface. Runtime cần outer ASGI guard cực mỏng được cài pre-bind qua launcher adapter version-pinned; không dựa riêng vào `on_app_started`. Adapter phải authenticate exact Gradio `/startup-events` self-call và readiness phải ghép identity với protected capability probes.
 9. **Network:** Forge backend và Classic proxy đều bind explicit `127.0.0.1`, dynamic port, credential riêng mỗi launch; không LAN/share mặc định.
 10. **VRAM:** Forge tiếp tục quyết định model placement/offload; desktop orchestration chỉ telemetry, policy trước job, queue và recovery.
 
@@ -265,7 +265,7 @@ ZIP được chọn. Runtime Python/Torch/CUDA wheels/Electron/assets là hàng 
 ADR phải được mở lại nếu một trong các điều sau xảy ra:
 
 - prototype không thể nhúng Classic ổn định trong secure `WebContentsView`;
-- launcher adapter không thể cài outer ASGI guard ổn định trên Forge/Gradio thật mà không sửa Forge core;
+- launcher adapter không thể duy trì outer ASGI guard và scoped Gradio startup self-call trên Forge/Gradio thật mà không sửa Forge core;
 - process supervisor không quản lý được toàn process tree trên Windows mục tiêu;
 - Electron idle RAM hoặc package size vượt budget sản phẩm đã được stakeholder chốt và Tauri prototype chứng minh cải thiện đủ lớn;
 - Forge upstream thay Gradio/API/process architecture căn bản;

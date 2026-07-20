@@ -96,12 +96,12 @@ Verification levels:
 
 - spawn args/cwd/env allowlist;
 - dynamic port candidate + collision retry;
-- readiness TCP/HTTP/capability probe;
+- first-packet probe và composite readiness: protected identity + runtime-manifest capability probes;
 - stdout/stderr capture/redaction/rotation interface;
 - interrupt/stop/restart timeout và crash classification;
 - fake child/API integration fixture;
 - Windows Job Object prototype và real Forge `--ui-debug-mode --api` smoke khi environment cho phép;
-- tích hợp direction từ auth spike: outer ASGI guard pre-bind, protected identity và Electron Classic proxy contract.
+- tích hợp direction từ auth/real-Forge spike: outer ASGI guard pre-bind, scoped credential cho exact Gradio `/startup-events` self-call, protected identity và Electron Classic proxy contract.
 
 **Out of scope:** production runtime downloader, inference, VRAM policy, extension manager.
 

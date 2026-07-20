@@ -100,10 +100,10 @@ Readiness nên là state machine:
 
 1. process đã spawn và chưa exit;
 2. TCP loopback accept;
-3. `GET /internal/ping` trả 2xx cho Web UI, hoặc endpoint API xác định như `GET /sdapi/v1/cmd-flags` trả hợp lệ khi `--api`;
-4. optional kiểm tra contract/version trước khi báo Ready.
+3. protected identity phải khớp service/protocol/instance/generation của launch;
+4. protected capability probes phải xác nhận core API và late extension routes đã đăng ký trước khi báo Ready.
 
-Không chỉ parse dòng `Startup time`, vì extension có thể in log tương tự và stdout format không phải API contract.
+Real-Forge smoke tại commit `9717fdf5` chứng minh identity có thể trả 200 ngay sau bind, trước khi `on_app_started` hoàn tất; vì vậy identity đơn lẻ chưa phải application readiness. Smoke cũng thấy `/sdapi/v1/cmd-flags` trả 500 `ResponseValidationError` do field `port`, nên route này không được dùng làm readiness contract tại runtime hiện tại. Không chỉ parse dòng `Startup time`, vì extension có thể in log tương tự và stdout format không phải API contract.
 
 ### 4.3 Authentication
 
@@ -253,8 +253,8 @@ CPython embeddable distribution là tối giản và tài liệu chính thức n
 ## 15. Unknowns cần prototype
 
 - Startup/shutdown thật trên Windows GPU machine, exit code và thời gian cleanup sau interrupt/OOM.
-- Contract của Gradio 4.40.0 với explicit dynamic port, WebSocket, auth và `WebContentsView`.
-- Local-auth spike chọn outer ASGI guard pre-bind + Electron Classic proxy và anonymous-pipe secret transport. Fake HTTP/WebSocket/SSE-like tests pass; Forge/Gradio 4.40 thật, absolute URL/CSP/UI reload và packaged Electron header injection vẫn cần bounded compatibility smoke.
+- Packaged Electron `WebContentsView` header injection cho HTTP/SSE/WebSocket, DOM/storage/CSP và third-party extension behavior.
+- Real-Forge smoke xác nhận outer guard pre-bind, Classic proxy, HTML/local assets, API đại diện, Gradio POST+SSE queue, upload/file/range, UI reload và representative extension HTTP/WebSocket. Nó đồng thời phát hiện Gradio tự gọi `/startup-events` sau bind; adapter phải inject backend credential cho exact self-call, không public-allowlist route này.
 - Chính xác các write vào runtime root trong normal generation, extension install và UI reload.
 - Process tree thực tế và compatibility của Windows Job Object với Python, Git, extension subprocess.
 - External GPU telemetry cho NVIDIA/Intel/AMD, multi-GPU mapping với Forge selected device.

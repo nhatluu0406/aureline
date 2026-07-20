@@ -1,0 +1,27 @@
+{
+  "name": "@forge-desktop/real-forge-compatibility-prototype",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "typecheck": "tsc --noEmit",
+    "test:node": "node --experimental-transform-types --test test/identity.test.ts",
+    "test:python": "\".runtime\\python-3.10.11\\python.exe\" -m unittest discover -s test -p test_adapter.py -v",
+    "test": "npm run test:node && npm run test:python",
+    "smoke": "node --experimental-transform-types src/real-smoke.ts",
+    "secret-scan": "node scripts/secret-scan.mjs",
+    "verify": "npm run typecheck && npm test && npm run smoke && npm run secret-scan"
+  },
+  "dependencies": {
+    "ws": "8.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/ws": "8.18.1",
+    "typescript": "5.9.3"
+  }
+}
