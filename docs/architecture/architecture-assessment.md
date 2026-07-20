@@ -1,5 +1,7 @@
 # Khảo sát kiến trúc Forge cho desktop
 
+> Tài liệu này lưu kết quả khảo sát Forge tại baseline được ghi bên dưới. Aureline hiện là repository sản phẩm độc lập; các path Forge trong tài liệu là path của third-party engine source, không phải working source tại repository Aureline.
+
 ## 1. Phạm vi và repository state
 
 Khảo sát này dựa trên code tại Git HEAD, không coi README là nguồn duy nhất.
@@ -211,7 +213,7 @@ Classic content và extension là trusted-local-but-extensible, không được 
 
 ## 11. Điểm tích hợp ít conflict
 
-1. Thêm top-level `desktop/` độc lập và workspace/build riêng.
+1. Giữ Aureline trong repository sản phẩm độc lập; quản lý Forge bằng runtime manifest và adapter thay vì sửa core.
 2. Dùng CLI/path/env hiện có thay vì sửa defaults Forge.
 3. Gọi API gốc qua main-process client có contract tests.
 4. Dùng user extension directory cho bridge cực mỏng, versioned cùng desktop runtime nếu thực sự cần.

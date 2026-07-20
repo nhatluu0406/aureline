@@ -1,6 +1,6 @@
-# ADR-001: Nền tảng Forge Desktop cho Windows portable
+# ADR-001: Nền tảng Aureline cho Windows portable
 
-- **Status:** Accepted for foundation; amended 2026-07-20 bởi process ownership và local auth spikes
+- **Status:** Accepted; amended 2026-07-20 for the independent Aureline repository
 - **Date:** 2026-07-19
 - **Decision owners:** Desktop architecture maintainers
 - **Code baseline:** `dfdcbab685e57677014f05a3309b48cc87383167`
@@ -25,7 +25,7 @@ Các boundary thực tế từ code:
 
 1. **Desktop framework:** Electron + React + TypeScript + Vite.
 2. **UI strategy:** Hybrid — React Studio cho workflow phổ biến, Classic Forge là fallback đầy đủ.
-3. **Repository:** Cùng repository, thêm top-level `desktop/` cô lập; không tách repo ở giai đoạn này.
+3. **Repository:** Aureline dùng repository độc lập. Forge source/runtime được materialize riêng từ version đã pin; Forge core không nằm ở repository root.
 4. **Engine boundary:** Forge chạy bằng Python child process độc lập; không embedded CPython.
 5. **Distribution:** Portable ZIP có nhiều file, không single EXE.
 6. **Communication:** Studio renderer dùng typed preload IPC; Electron main sở hữu Forge API client và backend credential.
@@ -37,29 +37,16 @@ Các boundary thực tế từ code:
 ### Target source layout
 
 ```text
-desktop/
-  app/
-    main/                  # Electron main, lifecycle/composition root
-    preload/               # typed, minimal contextBridge
-    renderer/              # React Studio UI
-  packages/
-    contracts/             # IPC/API schemas, domain types, versioned contracts
-    forge-client/          # HTTP client, auth, readiness/contract probing
-    process-supervisor/    # Forge process state machine và Windows process tree
-    gpu-monitor/           # telemetry providers và normalized samples
-    vram-safety/           # profiles, preflight, recovery policy
-    settings-store/        # schema, migration, atomic persistence
-    runtime-manager/       # manifest, paths, activate/rollback runtime
-    log-service/           # structured event + stdout/stderr rotation/redaction
-  tests/
-    contract/
-    integration/
-    e2e/
-  scripts/                 # dev/build/package/verify scripts
-  prototypes/              # chỉ experiment nhỏ, không import vào production
+app/                  # Electron main, preload và React renderer
+packages/             # contracts, lifecycle, bridge, settings, runtime manifest
+engine/               # Aureline adapter, manifests và release metadata
+native/job-owner/     # Rust Windows Job Object helper
+tests/                # production unit/integration/smoke fixtures
+tooling/scripts/      # dev/build/package/verify orchestration
+archive/prototypes/   # evidence only; never imported by production
 ```
 
-Không tạo nested `AGENTS.md` cho layout chưa tồn tại. Khi scaffold source thật, tạo `desktop/AGENTS.md`; nested sâu hơn chỉ khi main/renderer/bridge thực sự có quy tắc khác nhau.
+Chỉ tạo package khi có owner, contract, lifecycle và tests thực tế. Quy tắc app-specific nằm tại `app/AGENTS.md`.
 
 ### Runtime topology
 
@@ -217,7 +204,7 @@ Cho UX sạch nhưng API không phản ánh mọi extension tab/script/custom co
 
 ### Same repo vs separate repo
 
-Cùng repo được chọn để pin chính xác desktop contract với Forge commit/runtime manifest, review thay đổi API cùng consumer và tránh version drift. Desktop nằm top-level riêng, CODEOWNERS/CI paths riêng. Separate repo chỉ revisit nếu release cadence, quyền truy cập hoặc artifact size buộc tách.
+Quyết định ban đầu dùng cùng fork đã được thay thế sau Milestone 1. Aureline nay là repository sản phẩm độc lập để có identity, license boundary và release cadence rõ; runtime manifest vẫn pin chính xác Forge commit để tránh version drift. Forge source được materialize ngoài working source của Aureline và giữ nguyên license third-party.
 
 ### Child process vs embedded Python
 
@@ -232,7 +219,7 @@ ZIP được chọn. Runtime Python/Torch/CUDA wheels/Electron/assets là hàng 
 ### Positive
 
 - Không viết lại Forge và giữ extension fallback.
-- Upstream sync chủ yếu không chạm `desktop/`.
+- Forge upstream sync diễn ra qua runtime pin/materialization thay vì merge Forge core vào product repository.
 - Crash/OOM có process boundary để recover.
 - Shell, runtime và data có thể version/update độc lập.
 - TypeScript contracts thuận lợi cho Cursor/Codex và test automation.
@@ -270,14 +257,14 @@ ADR phải được mở lại nếu một trong các điều sau xảy ra:
 - Electron idle RAM hoặc package size vượt budget sản phẩm đã được stakeholder chốt và Tauri prototype chứng minh cải thiện đủ lớn;
 - Forge upstream thay Gradio/API/process architecture căn bản;
 - extension compatibility không còn là yêu cầu;
-- team chuyển sang separate release/security ownership khiến monorepo cản trở;
+- runtime pin/materialization không còn cung cấp traceability tương đương cho Forge compatibility;
 - legal review yêu cầu packaging/source-distribution topology khác.
 
 ## References
 
-- Khảo sát code: [architecture-assessment.md](architecture-assessment.md)
+- Khảo sát code: [architecture-assessment.md](../architecture/architecture-assessment.md)
 - [Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security)
 - [Electron WebContentsView migration](https://www.electronjs.org/blog/migrate-to-webcontentsview)
-- [Secure local bridge/auth spike](../../desktop/prototypes/secure-forge-bridge/README.md)
+- [Secure local bridge/auth spike](../../archive/prototypes/secure-forge-bridge/README.md)
 - [Tauri Windows prerequisites](https://v2.tauri.app/start/prerequisites/)
 - [Tauri WebView2 distribution modes](https://v2.tauri.app/distribute/windows-installer/)

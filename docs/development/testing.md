@@ -1,9 +1,8 @@
-# Kiểm thử Forge Desktop
+# Kiểm thử Aureline
 
 ## Quality gates
 
 ```powershell
-cd desktop/app
 npm run typecheck
 npm test
 npm run build
@@ -17,7 +16,7 @@ Unit/integration hiện kiểm tra contracts, settings atomic schema, runtime ma
 npm run smoke
 ```
 
-Smoke dùng runtime no-model đã materialize trong prototype; không tải model và không generation. Nó:
+Smoke dùng runtime no-model external được chọn qua `AURELINE_RUNTIME_MANIFEST`; không tải model và không generation. Nó:
 
 1. mở Electron và điều hướng App Shell;
 2. start Forge qua production Rust helper/adapter;
@@ -38,7 +37,7 @@ npm run package:dir
 npm run smoke:packaged
 ```
 
-Gate mở `release/win-unpacked/Forge Desktop.exe` với temp user-data không có manifest, xác minh app hiển thị trạng thái runtime chưa cấu hình và Start bị disable. Đây chưa phải clean-VM portable release test.
+Gate mở `release/win-unpacked/Aureline.exe` với temp user-data không có manifest, xác minh app hiển thị trạng thái runtime chưa cấu hình và Start bị disable. Đây chưa phải clean-VM portable release test.
 
 ## Cleanup và security checks
 

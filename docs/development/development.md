@@ -1,11 +1,10 @@
-# Phát triển Forge Desktop
+# Phát triển Aureline
 
 ## Cài đặt và chạy dev
 
 Yêu cầu build machine: Windows x64, Node 24-compatible toolchain, npm và Rust `rustc`. Người dùng release tương lai không cần các tool này.
 
 ```powershell
-cd desktop/app
 npm install
 npm run build:helper
 npm run dev
@@ -26,7 +25,7 @@ Output:
 
 - `dist/renderer`: Vite renderer;
 - `dist/electron`: bundled main/preload;
-- `runtime/job-helper/bin`: generated Rust helper, ignored;
+- `native/job-owner/bin`: generated Rust helper, ignored;
 - `release/win-unpacked`: packaged shell, ignored.
 
 Helper và launcher adapter được đặt ngoài ASAR qua `extraResources`. Build release phải prebuild/sign helper; máy người dùng không cần Rust. Package hiện không chứa Python runtime hoặc model.
@@ -43,25 +42,25 @@ Schema bắt buộc:
   "architecture": "x64",
   "pythonExecutable": "relative-or-absolute/python.exe",
   "forgeRoot": "relative-or-absolute/forge",
-  "launcherAdapter": "runtime/forge-launch-adapter/secure_launcher.py",
-  "helperExecutable": "runtime/job-helper/bin/job-owner-helper.exe",
+  "launcherAdapter": "engine/adapter/secure_launcher.py",
+  "helperExecutable": "native/job-owner/bin/job-owner-helper.exe",
   "forgeCommit": "optional-sha"
 }
 ```
 
-Dev dùng `runtime-manifest.example.json`; packaged app tìm `%APPDATA%/Forge Desktop/runtime-manifest.json`. Relative path resolve theo directory chứa manifest. Main validate schema/path; renderer chỉ nhận summary không có executable, PID, port hoặc token.
+Dev dùng `engine/manifests/runtime-manifest.example.json`; packaged app tìm `%APPDATA%/Aureline/runtime-manifest.json`. Relative path resolve theo directory chứa manifest. Main validate schema/path; renderer chỉ nhận summary không có executable, PID, port hoặc token. Đặt `AURELINE_RUNTIME_MANIFEST` để dùng manifest local/untracked khi Forge nằm ngoài repository.
 
 ## Cấu trúc
 
-- `electron/main`: lifecycle, IPC, window và Classic view policy.
-- `electron/preload`: API domain-specific duy nhất.
-- `renderer`: React app shell và design tokens.
+- `app/main`: lifecycle, IPC, window và Classic view policy.
+- `app/preload`: API domain-specific duy nhất.
+- `app/renderer`: React app shell và design tokens.
 - `packages/contracts`: runtime-validated IPC models/error codes.
 - `packages/process-supervisor`: state/lifecycle, Job helper client, logs.
 - `packages/local-bridge`: streaming HTTP/WebSocket proxy.
 - `packages/runtime-manifest`, `packages/settings`: validated storage.
-- `runtime/forge-launch-adapter`: pre-bind ASGI guard.
-- `runtime/job-helper`: Rust source và generated binary.
+- `engine/adapter`: pre-bind ASGI guard.
+- `native/job-owner`: Rust source và generated binary.
 
 ## Runtime selection và writable paths
 

@@ -1,9 +1,9 @@
-# Quy tắc cho Forge Desktop
+# Application boundary rules
 
-- Giữ biên Electron main/preload/renderer rõ ràng; renderer không có Node, filesystem, process hoặc network credential.
-- IPC phải domain-specific, typed và validate runtime; không expose generic channel/invoke/command execution.
-- Không đưa secret, PID, backend port hoặc raw command vào renderer, log hay persisted settings.
-- Không sửa Forge core; tích hợp qua package trong `app/` và adapter dưới `runtime/`.
-- Chạy typecheck, unit/integration tests và Electron smoke phù hợp trước khi báo PASS.
-- UI phải có hierarchy, focus state, empty/loading/error state có chủ đích; không để starter UI mặc định.
-- Giữ dependency/package nhỏ và không copy nguyên xi prototype; chỉ chuyển contract/seam đã được chứng minh.
+- Keep Electron main, preload, and renderer responsibilities separate.
+- Renderer code has no Node, filesystem, process, raw network credential, PID, port, or executable-path access.
+- Preload exposes only typed, domain-specific capabilities backed by runtime-validated IPC; never expose `ipcRenderer` or a generic command channel.
+- Main owns engine lifecycle, local bridge, settings, logs, and Classic Forge session policy.
+- Preserve `contextIsolation`, sandboxing, disabled Node integration, CSP, ephemeral Classic sessions, navigation controls, denied popups/permissions, and explicit download policy.
+- UI changes must cover loading, empty, error, success, focus, resize, and both light/dark themes without fake engine state.
+- Do not import from `archive/prototypes/`; port only reviewed contracts or seams into production with focused tests.

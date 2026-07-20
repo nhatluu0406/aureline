@@ -29,11 +29,11 @@ Verification levels:
 
 **In scope:**
 
-- scaffold `desktop/` với Electron/React/TypeScript/Vite package boundaries theo ADR;
+- scaffold Aureline với Electron/React/TypeScript/Vite package boundaries theo ADR;
 - package manager/lockfile, strict TypeScript, lint/format/unit runner;
 - root scripts không đụng build system Forge hiện tại;
 - contracts cho engine state, IPC error, runtime manifest và generation job envelope (chưa có UI);
-- `desktop/AGENTS.md`, test fixture conventions, CI path filter;
+- root/app `AGENTS.md`, test fixture conventions và CI path filter;
 - dependency/license baseline.
 
 **Out of scope:** real Forge spawn, production UI, updater, inference.

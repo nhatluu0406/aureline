@@ -47,7 +47,7 @@ Ví dụ:
 desktop/supervisor/012-readiness-probe
 desktop/renderer/027-generation-form-shell
 desktop/runtime/041-manifest-activation
-docs/desktop/006-vram-adr
+docs/006-vram-adr
 ```
 
 Mỗi agent có worktree riêng đặt cạnh repo hoặc trong root quản lý ngoài source, ví dụ:
@@ -216,7 +216,7 @@ docs(desktop): record secure local auth unknown
 
 ## 12. Architecture decision records
 
-ADR nằm trong `docs/desktop/`, tên có số khi có nhiều quyết định. ADR chứa Context, Decision, Alternatives, Consequences, Risks, Revisit conditions và baseline commit. Task làm thay đổi process boundary, security model, packaging lifecycle, bridge scope hoặc VRAM automation phải update/tạo ADR trước hoặc cùng implementation.
+ADR nằm trong `docs/`, tên có số khi có nhiều quyết định. ADR chứa Context, Decision, Alternatives, Consequences, Risks, Revisit conditions và baseline commit. Task làm thay đổi process boundary, security model, packaging lifecycle, bridge scope hoặc VRAM automation phải update/tạo ADR trước hoặc cùng implementation.
 
 Implementation detail nhỏ ghi trong package README/design note gần code, không tạo ADR cho mọi class.
 
@@ -224,9 +224,9 @@ Implementation detail nhỏ ghi trong package README/design note gần code, kh�
 
 Root `AGENTS.md` hiện đủ cho repository-wide safety. Khi bắt đầu scaffold:
 
-- tạo `desktop/AGENTS.md`: commands, package boundaries, quality gates, portable-path rule;
-- nested `desktop/app/renderer/AGENTS.md` chỉ khi cần rule accessibility/design/test riêng;
-- nested `desktop/app/main/AGENTS.md` chỉ khi cần IPC/security/process rule chi tiết;
+- cập nhật root/app `AGENTS.md`: commands, package boundaries, quality gates và portable-path rule;
+- nested `app/renderer/AGENTS.md` chỉ khi cần rule accessibility/design/test riêng;
+- nested `app/main/AGENTS.md` chỉ khi cần IPC/security/process rule chi tiết;
 - bridge extension có `AGENTS.md` riêng vì đây là boundary vào Forge, cấm generation logic/core patch;
 - không tạo nested file chỉ lặp root rules.
 
