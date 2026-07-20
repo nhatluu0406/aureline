@@ -1,10 +1,10 @@
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
-const root=resolve(import.meta.dirname,"..");
+const root=resolve(import.meta.dirname,"../..");
 const run=(command,args)=>new Promise((ok,fail)=>{const child=spawn(command,args,{cwd:root,shell:false,stdio:"inherit"});child.once("error",fail);child.once("exit",code=>code===0?ok():fail(new Error(`${command} exited ${code}`)))});
 await run("npm.cmd",["run","build:helper"]);await run("npm.cmd",["run","build:electron"]);
 const vite=spawn("npm.cmd",["exec","vite","--","--host","127.0.0.1"],{cwd:root,shell:false,stdio:"inherit"});
 await new Promise(resolvePromise=>setTimeout(resolvePromise,1200));
-const electronEnvironment={...process.env,FORGE_DESKTOP_DEV_SERVER_URL:"http://127.0.0.1:5173"};delete electronEnvironment.ELECTRON_RUN_AS_NODE;
+const electronEnvironment={...process.env,AURELINE_DEV_SERVER_URL:"http://127.0.0.1:5173"};delete electronEnvironment.ELECTRON_RUN_AS_NODE;
 const electron=spawn(resolve(root,"node_modules/electron/dist/electron.exe"),[root],{cwd:root,shell:false,stdio:"inherit",env:electronEnvironment});
 electron.once("exit",()=>vite.kill());process.on("SIGINT",()=>{electron.kill();vite.kill()});await new Promise(resolvePromise=>electron.once("exit",resolvePromise));

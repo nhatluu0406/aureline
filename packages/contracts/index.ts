@@ -43,7 +43,7 @@ export const settingsPatchSchema = settingsSchema.omit({ schemaVersion: true }).
 export type AppInfo = { version: string; platform: NodeJS.Platform; packaged: boolean };
 export type RuntimeSummary = { configured: boolean; runtimeId: string | null; forgeCommit: string | null; description: string };
 
-export type ForgeDesktopApi = {
+export type AurelineApi = {
   app: { getInfo(): Promise<AppInfo>; window(action: "minimize" | "toggle-maximize" | "close"): Promise<void> };
   engine: {
     getState(): Promise<EngineSnapshot>;
@@ -59,9 +59,9 @@ export type ForgeDesktopApi = {
 };
 
 export const IPC = {
-  appInfo: "app:get-info", window: "app:window",
-  engineState: "engine:get-state", engineStart: "engine:start", engineStop: "engine:stop", engineRestart: "engine:restart", engineEvent: "engine:event",
-  logsGet: "logs:get", logEvent: "logs:event",
-  classicShow: "classic:show", classicHide: "classic:hide", classicReload: "classic:reload",
-  settingsGet: "settings:get", settingsUpdate: "settings:update", runtimeSummary: "runtime:get-summary",
+  appInfo: "aureline:app:get-info", window: "aureline:app:window",
+  engineState: "aureline:engine:get-state", engineStart: "aureline:engine:start", engineStop: "aureline:engine:stop", engineRestart: "aureline:engine:restart", engineEvent: "aureline:engine:event",
+  logsGet: "aureline:logs:get", logEvent: "aureline:logs:event",
+  classicShow: "aureline:classic:show", classicHide: "aureline:classic:hide", classicReload: "aureline:classic:reload",
+  settingsGet: "aureline:settings:get", settingsUpdate: "aureline:settings:update", runtimeSummary: "aureline:runtime:get-summary",
 } as const;

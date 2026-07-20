@@ -9,9 +9,9 @@ import { SettingsStore } from "../../packages/settings/settings-store.ts";
 import { ClassicViewController } from "./classic-view.ts";
 
 let mainWindow:BrowserWindow|null=null;let engine:EngineSupervisor;let classic:ClassicViewController;let settings:SettingsStore;let quitting=false;
-const devServer=process.env.FORGE_DESKTOP_DEV_SERVER_URL;
-if(process.env.FORGE_DESKTOP_USER_DATA)app.setPath("userData",resolve(process.env.FORGE_DESKTOP_USER_DATA));
-function manifestCandidate():string{if(process.env.FORGE_DESKTOP_RUNTIME_MANIFEST)return resolve(process.env.FORGE_DESKTOP_RUNTIME_MANIFEST);return app.isPackaged?resolve(app.getPath("userData"),"runtime-manifest.json"):resolve(app.getAppPath(),"runtime-manifest.example.json")}
+const devServer=process.env.AURELINE_DEV_SERVER_URL;
+if(process.env.AURELINE_USER_DATA)app.setPath("userData",resolve(process.env.AURELINE_USER_DATA));
+function manifestCandidate():string{if(process.env.AURELINE_RUNTIME_MANIFEST)return resolve(process.env.AURELINE_RUNTIME_MANIFEST);return app.isPackaged?resolve(app.getPath("userData"),"runtime-manifest.json"):resolve(app.getAppPath(),"engine/manifests/runtime-manifest.example.json")}
 async function readManifest():Promise<RuntimeManifest|null>{const candidate=manifestCandidate();if(!existsSync(candidate))return null;try{return await loadRuntimeManifest(candidate)}catch{return null}}
 function createWindow():BrowserWindow{
   const window=new BrowserWindow({width:1280,height:820,minWidth:980,minHeight:650,show:false,frame:false,titleBarStyle:"hidden",backgroundColor:"#101217",webPreferences:{preload:resolve(app.getAppPath(),"dist/electron/preload.cjs"),contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true}});

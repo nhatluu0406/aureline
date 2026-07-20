@@ -1,3 +1,3 @@
-import type { ForgeDesktopApi } from "../packages/contracts/index.ts";
-declare global { interface Window { forgeDesktop: ForgeDesktopApi } }
+import type { AurelineApi } from "../../packages/contracts/index.ts";
+declare global { interface Window { aureline: AurelineApi } }
 export {};

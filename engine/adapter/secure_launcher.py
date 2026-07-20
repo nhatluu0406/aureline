@@ -1,4 +1,4 @@
-"""Forge Desktop pre-bind authentication adapter.
+"""Aureline pre-bind authentication adapter for the Forge engine.
 
 The one-shot bootstrap frame arrives on inherited stdin. The credential is never
 accepted from argv, environment, URL or a file.
@@ -20,7 +20,7 @@ from urllib.parse import urlsplit
 
 MAX_FRAME_BYTES = 16 * 1024
 AUTH_HEADER = b"x-forge-bridge-authorization"
-INTERNAL_ORIGIN = b"http://forge-desktop.internal"
+INTERNAL_ORIGIN = b"http://aureline.internal"
 EXPECTED_GRADIO_VERSION = "4.40.0"
 PROTOCOL_VERSION = 1
 
@@ -78,7 +78,7 @@ class Guard:
             return
         if scope.get("type") == "http" and scope.get("path") == "/bridge/identity":
             body = json.dumps({
-                "service": "forge-desktop-bridge", "protocolVersion": PROTOCOL_VERSION,
+                "service": "aureline-engine-bridge", "protocolVersion": PROTOCOL_VERSION,
                 "instanceId": self.bootstrap.instance_id, "launchGeneration": self.bootstrap.launch_generation,
                 "capabilities": {"http": True, "websocket": True}, "enginePid": os.getpid(),
             }, separators=(",", ":")).encode()

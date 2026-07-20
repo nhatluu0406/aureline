@@ -3,14 +3,15 @@ import { appendFile, cp, mkdir, rm, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { resolve } from "node:path";
 import assert from "node:assert/strict";
-const root=resolve(import.meta.dirname,".."),userData=resolve(root,".local/electron-smoke");await rm(userData,{recursive:true,force:true});await mkdir(resolve(userData,"engine/data/extensions/desktop-shell-smoke"),{recursive:true});await cp(resolve(root,"tests/fixtures/classic-extension"),resolve(userData,"engine/data/extensions/desktop-shell-smoke"),{recursive:true});
-const electronEnvironment={...process.env,FORGE_DESKTOP_USER_DATA:userData,FORGE_DESKTOP_RUNTIME_MANIFEST:resolve(root,"runtime-manifest.example.json")};delete electronEnvironment.ELECTRON_RUN_AS_NODE;
+const root=resolve(import.meta.dirname,"../.."),userData=resolve(root,".local/electron-smoke");await rm(userData,{recursive:true,force:true});await mkdir(resolve(userData,"engine/data/extensions/aureline-shell-smoke"),{recursive:true});await cp(resolve(root,"tests/fixtures/classic-extension"),resolve(userData,"engine/data/extensions/aureline-shell-smoke"),{recursive:true});
+const runtimeManifest=process.env.AURELINE_RUNTIME_MANIFEST??resolve(root,"engine/manifests/runtime-manifest.example.json");
+const electronEnvironment={...process.env,AURELINE_USER_DATA:userData,AURELINE_RUNTIME_MANIFEST:runtimeManifest};delete electronEnvironment.ELECTRON_RUN_AS_NODE;
 const electronApp=await electron.launch({executablePath:resolve(root,"node_modules/electron/dist/electron.exe"),args:[root],env:electronEnvironment});
 const diagnosticPath=resolve(userData,"electron-smoke.log"),record=async(value)=>await appendFile(diagnosticPath,`${String(value).replace(/Bearer\s+\S+/giu,"Bearer [REDACTED]")}\n`);
 electronApp.process().stdout?.on("data",chunk=>void record(`stdout ${chunk}`));electronApp.process().stderr?.on("data",chunk=>void record(`stderr ${chunk}`));
 let classicOrigin="",ownedPorts=[];
 try{
-  const page=await electronApp.firstWindow();page.on("console",message=>void record(`console ${message.type()} ${message.text()}`));page.on("pageerror",error=>void record(`pageerror ${error.message}`));page.on("close",()=>void record("renderer closed"));await page.waitForLoadState("domcontentloaded");await page.getByText("Forge Desktop",{exact:true}).first().waitFor();
+  const page=await electronApp.firstWindow();page.on("console",message=>void record(`console ${message.type()} ${message.text()}`));page.on("pageerror",error=>void record(`pageerror ${error.message}`));page.on("close",()=>void record("renderer closed"));await page.waitForLoadState("domcontentloaded");await page.getByText("Aureline",{exact:true}).first().waitFor();
   await page.getByRole("button",{name:"Engine",exact:true}).click();await page.getByRole("button",{name:"Start Forge"}).click();
   const outcome=await Promise.race([page.getByRole("heading",{name:"Sẵn sàng",exact:true}).waitFor({timeout:180_000}).then(()=>"ready"),page.locator(".error-box").waitFor({timeout:180_000}).then(()=>"failed")]);if(outcome==="failed")throw new Error(`Engine startup failed: ${await page.locator(".error-box").innerText()}`);
   await page.getByRole("button",{name:"Classic Forge",exact:true}).click();

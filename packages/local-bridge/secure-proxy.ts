@@ -4,9 +4,9 @@ import { Transform, type Duplex } from "node:stream";
 import { timingSafeEqual } from "node:crypto";
 import { WebSocket, WebSocketServer, type RawData } from "ws";
 
-export const EDGE_AUTH_HEADER = "x-forge-desktop-authorization";
+export const EDGE_AUTH_HEADER = "x-aureline-authorization";
 export const BACKEND_AUTH_HEADER = "x-forge-bridge-authorization";
-export const INTERNAL_ORIGIN = "http://forge-desktop.internal";
+export const INTERNAL_ORIGIN = "http://aureline.internal";
 const LOOPBACK = "127.0.0.1";
 const HOP = new Set(["connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade"]);
 const bearer = (token: string): string => `Bearer ${token}`;

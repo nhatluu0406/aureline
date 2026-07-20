@@ -78,7 +78,7 @@ fn read_string(reader: &mut impl Read, max: usize) -> io::Result<String> {
 }
 fn read_request(reader: &mut impl Read) -> io::Result<Request> {
     let mut magic=[0;8]; reader.read_exact(&mut magic)?;
-    if &magic!=b"FDM1JOB1" || read_u32(reader)?!=1 { return Err(io::Error::new(io::ErrorKind::InvalidData,"unsupported protocol")); }
+    if &magic!=b"AUR1JOB1" || read_u32(reader)?!=1 { return Err(io::Error::new(io::ErrorKind::InvalidData,"unsupported protocol")); }
     let executable=read_string(reader,32768)?; let cwd=read_string(reader,32768)?;
     let argc=read_u32(reader)?; if argc>256 { return Err(io::Error::new(io::ErrorKind::InvalidData,"too many arguments")); }
     let mut args=Vec::new(); for _ in 0..argc { args.push(read_string(reader,32768)?); }

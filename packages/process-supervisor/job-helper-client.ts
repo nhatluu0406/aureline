@@ -12,7 +12,7 @@ function encode(request: LaunchRequest): Buffer {
   const count = (value: number): Buffer => { const data = Buffer.allocUnsafe(4); data.writeUInt32LE(value); return data; };
   const environment = Object.entries(request.environment);
   return Buffer.concat([
-    Buffer.from("FDM1JOB1"), count(1), field(request.executable), field(request.cwd), count(request.args.length),
+    Buffer.from("AUR1JOB1"), count(1), field(request.executable), field(request.cwd), count(request.args.length),
     ...request.args.map(field), count(environment.length), ...environment.flatMap(([key, value]) => [field(key), field(value)]),
     field(request.secretFrame),
   ]);

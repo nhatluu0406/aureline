@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { engineSnapshotSchema, IPC, logEventSchema, settingsSchema, type ForgeDesktopApi } from "../../packages/contracts/index.ts";
+import { engineSnapshotSchema, IPC, logEventSchema, settingsSchema, type AurelineApi } from "../../packages/contracts/index.ts";
 
-const api: ForgeDesktopApi = {
+const api: AurelineApi = {
   app: { getInfo: async () => await ipcRenderer.invoke(IPC.appInfo), window: async (action) => await ipcRenderer.invoke(IPC.window, action) },
   engine: {
     getState: async () => engineSnapshotSchema.parse(await ipcRenderer.invoke(IPC.engineState)),
@@ -18,4 +18,4 @@ const api: ForgeDesktopApi = {
   settings: { get:async()=>settingsSchema.parse(await ipcRenderer.invoke(IPC.settingsGet)),update:async(patch)=>settingsSchema.parse(await ipcRenderer.invoke(IPC.settingsUpdate,patch)) },
   runtime: { getSummary:async()=>await ipcRenderer.invoke(IPC.runtimeSummary) },
 };
-contextBridge.exposeInMainWorld("forgeDesktop", api);
+contextBridge.exposeInMainWorld("aureline", api);
