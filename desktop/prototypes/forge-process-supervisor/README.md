@@ -106,16 +106,11 @@ Sau khi `ready`, caller có thể giữ `waitForTermination()` để nhận ngay
 
 ## 10. Khuyến nghị Windows Job Object
 
-Production nên có một spike riêng tạo Job Object, đặt `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, launch Forge theo cách tránh race trước khi assign, rồi giữ job handle trong Electron main/native owner. Theo Microsoft, child tạo bằng `CreateProcess` mặc định kế thừa membership; đóng job handle cuối với kill-on-close sẽ terminate các process trong job. Breakaway flags có thể làm descendant thoát job; không bật `BREAKAWAY_OK`/`SILENT_BREAKAWAY_OK` mặc định và phải test extension/tool thực tế. [Microsoft Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects), [limit flags](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_basic_limit_information).
+Spike tại `../windows-job-object/` đã kiểm chứng `CREATE_SUSPENDED → AssignProcessToJobObject → ResumeThread`, descendant/grandchild inheritance, nested Job trong runner hiện tại và cleanup khi đóng/crash owner. Quyết định production là signed Rust helper giữ Job handle; Electron main giao tiếp qua private pipe. Job ownership vì vậy phải thay launch seam, không chỉ thay `terminateOwnedTree(pid)` sau khi Node đã spawn. Breakaway flags không được bật mặc định; explicit `CREATE_BREAKAWAY_FROM_JOB` trong fixture vẫn không thoát immediate Job khi Job không cho breakaway. [Microsoft Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects), [limit flags](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_basic_limit_information).
 
 Node/Electron không có Job Object API built-in trong child-process contract, nên cần một N-API addon hoặc helper executable nhỏ. Native addon phải build/rebuild đúng Electron ABI, làm tăng matrix x64/arm64, signing, antivirus và update burden; Electron mô tả rõ native modules thường cần rebuild theo Electron version. [Electron native modules](https://www.electronjs.org/docs/latest/tutorial/using-native-node-modules).
 
-Khuyến nghị spike so sánh hai lựa chọn:
-
-- N-API addon tạo suspended process → assign job → resume, API surface rất nhỏ;
-- signed helper executable giữ Job handle và proxy lifecycle tối thiểu.
-
-Chưa chọn package bên thứ ba trong prototype vì chưa audit maintenance, prebuilt binaries, license, Electron ABI và signing provenance. Test bắt buộc gồm extension subprocess inheritance, nested jobs và explicit/silent breakaway failure.
+N-API vẫn khả thi về kỹ thuật nhưng native crash sẽ làm crash Electron main và kéo theo Electron ABI/prebuild/package matrix. Helper cô lập native failure, test độc lập và đã chứng minh kill-on-close; binary release phải được CI prebuild/sign cho x64/arm64. Forge/extension subprocess thực và packaged Electron vẫn là unknown, không được suy diễn từ fake fixture.
 
 ## 11. Authentication findings
 
@@ -183,7 +178,7 @@ Khi runtime portable sẵn sàng, smoke riêng nên dùng temporary `--data-dir`
 
 ## 17. Quyết định chưa chốt
 
-- N-API addon hay signed helper cho Job Object và console events.
+- Framed stdout/stderr relay và heartbeat policy chính xác giữa Electron main với signed Job helper.
 - Secure middleware nhận secret từ environment hay ACL-protected file.
 - Readiness capability/version schema tối thiểu cho Web UI và API-only.
 - Endpoint cooperative nào đủ an toàn sau khi generation/output đang active.
