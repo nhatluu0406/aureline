@@ -1,0 +1,4 @@
+interface:
+  display_name: "External Model Provider"
+  short_description: "Secure external model provider integration"
+  default_prompt: "Use $external-model-provider to add or review an external model provider workflow safely."

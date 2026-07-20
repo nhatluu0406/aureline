@@ -18,7 +18,7 @@ export class ForgeApiClient {
     }
   }
 
-  public async generate(input: GenerationRequest): Promise<GenerationResult> {
+  public async generate(input: GenerationRequest, checkpointName?: string): Promise<GenerationResult> {
     try {
       const baseUrl = normalizeLoopbackUrl(input.baseUrl);
       const response = await this.request(`${baseUrl}/sdapi/v1/txt2img`, {
@@ -35,6 +35,7 @@ export class ForgeApiClient {
           sampler_name: input.sampler,
           batch_size: 1,
           n_iter: 1,
+          ...(checkpointName ? { override_settings: { sd_model_checkpoint: checkpointName }, override_settings_restore_afterwards: true } : {}),
         }),
         signal: AbortSignal.timeout(10 * 60_000),
       });
@@ -51,6 +52,14 @@ export class ForgeApiClient {
     } catch (error) {
       return { ok: false, message: friendlyError(error) };
     }
+  }
+
+  public async refreshModels(input: string, type: "checkpoint" | "lora"): Promise<boolean> {
+    try {
+      const baseUrl = normalizeLoopbackUrl(input);
+      const response = await this.request(`${baseUrl}/sdapi/v1/${type === "checkpoint" ? "refresh-checkpoints" : "refresh-loras"}`, { method: "POST", signal: AbortSignal.timeout(8_000) });
+      return response.ok;
+    } catch { return false; }
   }
 }
 

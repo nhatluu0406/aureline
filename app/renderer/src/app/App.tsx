@@ -1,178 +1,74 @@
-import { useEffect, useRef, useState } from "react";
-import { Aperture, Check, CircleAlert, Image as ImageIcon, LoaderCircle, Maximize2, Minimize2, Moon, PlugZap, Settings, SlidersHorizontal, Sparkles, Sun, WandSparkles, X } from "lucide-react";
-import type { DesktopSettings } from "../../../../packages/contracts/index.ts";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Aperture, Boxes, Check, CircleAlert, ClipboardPaste, Download, FolderOpen, HardDrive, Image as ImageIcon, KeyRound, LoaderCircle, Maximize2, Minimize2, Moon, Pause, Play, PlugZap, RefreshCw, Search, Settings, ShieldCheck, SlidersHorizontal, Sparkles, Sun, Trash2, WandSparkles, X } from "lucide-react";
+import type { CredentialStatus, DesktopSettings, DownloadRecord, InstalledModel, ModelRoot, ModelType, RemoteModel } from "../../../../packages/contracts/index.ts";
 
-type Page = "studio" | "settings";
+type Page = "studio" | "models" | "settings";
 type Connection = "unknown" | "testing" | "connected" | "disconnected";
 type Generation = "idle" | "running" | "success" | "error";
 
 export function App() {
-  const [page, setPage] = useState<Page>("studio");
-  const [settings, setSettings] = useState<DesktopSettings | null>(null);
-  const [connection, setConnection] = useState<Connection>("unknown");
-  const [connectionMessage, setConnectionMessage] = useState("Connection not tested");
-  const [generation, setGeneration] = useState<Generation>("idle");
-  const [generationMessage, setGenerationMessage] = useState("");
-  const [image, setImage] = useState<string | null>(null);
-  const [resultSeed, setResultSeed] = useState<number | null>(null);
-  const hydrated = useRef(false);
-
-  useEffect(() => {
-    void window.aureline.settings.get().then(value => { setSettings(value); hydrated.current = true; });
-  }, []);
-
-  useEffect(() => {
-    if (!settings) return;
-    document.documentElement.dataset.theme = settings.theme;
-    const query = matchMedia("(prefers-color-scheme: dark)");
-    const sync = () => { document.documentElement.dataset.systemDark = String(query.matches); };
-    sync(); query.addEventListener("change", sync); return () => query.removeEventListener("change", sync);
-  }, [settings?.theme]);
-
-  useEffect(() => {
-    if (!settings || !hydrated.current) return;
-    const timer = window.setTimeout(() => { void window.aureline.settings.update({ studio: settings.studio }); }, 450);
-    return () => window.clearTimeout(timer);
-  }, [settings?.studio]);
-
-  useEffect(() => {
-    if (!settings || !hydrated.current) return;
-    const timer = window.setTimeout(() => { void window.aureline.settings.update({ forgeBaseUrl: settings.forgeBaseUrl }); }, 450);
-    return () => window.clearTimeout(timer);
-  }, [settings?.forgeBaseUrl]);
-
+  const [page, setPage] = useState<Page>("studio"); const [settings, setSettings] = useState<DesktopSettings | null>(null);
+  const [connection, setConnection] = useState<Connection>("unknown"); const [connectionMessage, setConnectionMessage] = useState("Connection not tested");
+  const [generation, setGeneration] = useState<Generation>("idle"); const [generationMessage, setGenerationMessage] = useState(""); const [image, setImage] = useState<string | null>(null); const [resultSeed, setResultSeed] = useState<number | null>(null);
+  const [downloads, setDownloads] = useState<DownloadRecord[]>([]); const [library, setLibrary] = useState<InstalledModel[]>([]); const hydrated = useRef(false);
+  useEffect(() => { void Promise.all([window.aureline.settings.get(), window.aureline.models.listDownloads(), window.aureline.models.listLibrary()]).then(([value, activeDownloads, models]) => { setSettings(value); setDownloads(activeDownloads); setLibrary(models); hydrated.current = true; }); const unsubscribe = window.aureline.models.subscribeDownloads(record => { setDownloads(current => [record, ...current.filter(item => item.id !== record.id)]); if (record.state === "completed") void window.aureline.models.listLibrary().then(setLibrary); }); return unsubscribe; }, []);
+  useEffect(() => { if (!settings) return; document.documentElement.dataset.theme = settings.theme; const query = matchMedia("(prefers-color-scheme: dark)"); const sync = () => { document.documentElement.dataset.systemDark = String(query.matches); }; sync(); query.addEventListener("change", sync); return () => query.removeEventListener("change", sync); }, [settings?.theme]);
+  useEffect(() => { if (!settings || !hydrated.current) return; const timer = window.setTimeout(() => { void window.aureline.settings.update({ studio: settings.studio }); }, 450); return () => window.clearTimeout(timer); }, [settings?.studio]);
+  useEffect(() => { if (!settings || !hydrated.current) return; const timer = window.setTimeout(() => { void window.aureline.settings.update({ forgeBaseUrl: settings.forgeBaseUrl }); }, 450); return () => window.clearTimeout(timer); }, [settings?.forgeBaseUrl]);
   if (!settings) return <div className="boot"><div className="aureline-glyph"><Sparkles /></div><span>Opening Aureline</span></div>;
-
-  const updateStudio = <K extends keyof DesktopSettings["studio"]>(key: K, value: DesktopSettings["studio"][K]) => {
-    setSettings(current => current ? { ...current, studio: { ...current.studio, [key]: value } } : current);
-  };
-  const persist = async (patch: Partial<Omit<DesktopSettings, "schemaVersion">>) => {
-    const next = await window.aureline.settings.update(patch); setSettings(next); return next;
-  };
-  const testConnection = async () => {
-    setConnection("testing"); setConnectionMessage("Checking Forge API…");
-    const result = await window.aureline.forge.testConnection(settings.forgeBaseUrl);
-    setConnection(result.ok ? "connected" : "disconnected"); setConnectionMessage(result.message);
-  };
-  const generate = async () => {
-    const prompt = settings.studio.prompt.trim();
-    if (!prompt) { setGeneration("error"); setGenerationMessage("Add a prompt before generating."); return; }
-    setGeneration("running"); setGenerationMessage("Forge is creating your image…");
-    await window.aureline.settings.update({ studio: settings.studio });
-    const result = await window.aureline.forge.generate({ baseUrl: settings.forgeBaseUrl, ...settings.studio, prompt });
-    if (result.ok) { setImage(result.image); setResultSeed(result.seed); setGeneration("success"); setGenerationMessage("Generation complete"); setConnection("connected"); }
-    else { setGeneration("error"); setGenerationMessage(result.message); if (connection === "unknown") setConnection("disconnected"); }
-  };
-
+  const updateStudio = <K extends keyof DesktopSettings["studio"]>(key: K, value: DesktopSettings["studio"][K]) => setSettings(current => current ? { ...current, studio: { ...current.studio, [key]: value } } : current);
+  const persist = async (patch: Partial<Omit<DesktopSettings, "schemaVersion">>) => { const next = await window.aureline.settings.update(patch); setSettings(next); return next; };
+  const testConnection = async () => { setConnection("testing"); setConnectionMessage("Checking Forge API…"); const result = await window.aureline.forge.testConnection(settings.forgeBaseUrl); setConnection(result.ok ? "connected" : "disconnected"); setConnectionMessage(result.message); };
+  const generate = async () => { const prompt = settings.studio.prompt.trim(); if (!prompt) { setGeneration("error"); setGenerationMessage("Add a prompt before generating."); return; } setGeneration("running"); setGenerationMessage("Forge is creating your image…"); await window.aureline.settings.update({ studio: settings.studio }); const result = await window.aureline.forge.generate({ baseUrl: settings.forgeBaseUrl, ...settings.studio, prompt }); if (result.ok) { setImage(result.image); setResultSeed(result.seed); setGeneration("success"); setGenerationMessage("Generation complete"); setConnection("connected"); } else { setGeneration("error"); setGenerationMessage(result.message); if (connection === "unknown") setConnection("disconnected"); } };
+  const selectedModel = library.find(model => model.id === settings.studio.selectedModelId);
   return <div className="app-shell">
-    <header className="titlebar">
-      <div className="title-brand"><div className="mini-glyph"><Sparkles /></div><strong>Aureline</strong><span>/</span><span>{page === "studio" ? "Studio" : "Settings"}</span></div>
-      <div className="title-drag" />
-      <div className="window-actions">
-        <button aria-label="Minimize" onClick={() => void window.aureline.app.window("minimize")}><Minimize2 /></button>
-        <button aria-label="Maximize" onClick={() => void window.aureline.app.window("toggle-maximize")}><Maximize2 /></button>
-        <button className="close" aria-label="Close" onClick={() => void window.aureline.app.window("close")}><X /></button>
-      </div>
-    </header>
-
-    <aside className="rail" aria-label="Main navigation">
-      <div className="aureline-glyph" title="Aureline"><Sparkles /></div>
-      <nav>
-        <button className={page === "studio" ? "active" : ""} onClick={() => setPage("studio")} aria-label="Studio"><WandSparkles /><span>Studio</span></button>
-        <button className={page === "settings" ? "active" : ""} onClick={() => setPage("settings")} aria-label="Settings"><Settings /><span>Settings</span></button>
-      </nav>
-      <div className={`connection-beacon ${connection}`} title={connectionMessage} />
-    </aside>
-
-    {page === "studio" ? <Studio
-      value={settings.studio}
-      connection={connection}
-      generation={generation}
-      message={generationMessage}
-      image={image}
-      resultSeed={resultSeed}
-      onChange={updateStudio}
-      onGenerate={() => void generate()}
-      onOpenSettings={() => setPage("settings")}
-    /> : <SettingsView
-      value={settings}
-      connection={connection}
-      connectionMessage={connectionMessage}
-      onChange={persist}
-      onBaseUrlChange={forgeBaseUrl => { setSettings(current => current ? { ...current, forgeBaseUrl } : current); setConnection("unknown"); setConnectionMessage("Connection not tested"); }}
-      onTest={() => void testConnection()}
-      onDone={() => setPage("studio")}
-    />}
+    <header className="titlebar"><div className="title-brand"><div className="mini-glyph"><Sparkles /></div><strong>Aureline</strong><span>/</span><span>{page[0]!.toUpperCase() + page.slice(1)}</span></div><div className="title-drag" /><div className="window-actions"><button aria-label="Minimize" onClick={() => void window.aureline.app.window("minimize")}><Minimize2 /></button><button aria-label="Maximize" onClick={() => void window.aureline.app.window("toggle-maximize")}><Maximize2 /></button><button className="close" aria-label="Close" onClick={() => void window.aureline.app.window("close")}><X /></button></div></header>
+    <aside className="rail" aria-label="Main navigation"><div className="aureline-glyph" title="Aureline"><Sparkles /></div><nav><NavButton active={page === "studio"} label="Studio" icon={<WandSparkles />} onClick={() => setPage("studio")} /><NavButton active={page === "models"} label="Models" icon={<Boxes />} onClick={() => setPage("models")} /><NavButton active={page === "settings"} label="Settings" icon={<Settings />} onClick={() => setPage("settings")} /></nav><div className={`connection-beacon ${connection}`} title={connectionMessage} /></aside>
+    {page === "studio" ? <Studio value={settings.studio} selectedModel={selectedModel} connection={connection} generation={generation} message={generationMessage} image={image} resultSeed={resultSeed} onChange={updateStudio} onGenerate={() => void generate()} onOpenSettings={() => setPage("settings")} onOpenModels={() => setPage("models")} /> : page === "models" ? <ModelsView settings={settings} downloads={downloads} library={library} onLibrary={setLibrary} onSettings={next => setSettings(next)} onUse={async id => { await window.aureline.models.useInStudio(id); const next = await window.aureline.settings.get(); setSettings(next); setPage("studio"); }} /> : <SettingsView value={settings} connection={connection} connectionMessage={connectionMessage} onChange={persist} onBaseUrlChange={forgeBaseUrl => { setSettings(current => current ? { ...current, forgeBaseUrl } : current); setConnection("unknown"); setConnectionMessage("Connection not tested"); }} onTest={() => void testConnection()} onDone={() => setPage("studio")} />}
   </div>;
 }
 
-type StudioProps = {
-  value: DesktopSettings["studio"];
-  connection: Connection;
-  generation: Generation;
-  message: string;
-  image: string | null;
-  resultSeed: number | null;
-  onChange: <K extends keyof DesktopSettings["studio"]>(key: K, value: DesktopSettings["studio"][K]) => void;
-  onGenerate: () => void;
-  onOpenSettings: () => void;
-};
+function NavButton({ active, label, icon, onClick }: { active: boolean; label: string; icon: React.ReactNode; onClick: () => void }) { return <button className={active ? "active" : ""} onClick={onClick} aria-label={label}>{icon}<span>{label}</span></button>; }
+function Studio({ value, selectedModel, connection, generation, message, image, resultSeed, onChange, onGenerate, onOpenSettings, onOpenModels }: { value: DesktopSettings["studio"]; selectedModel: InstalledModel | undefined; connection: Connection; generation: Generation; message: string; image: string | null; resultSeed: number | null; onChange: <K extends keyof DesktopSettings["studio"]>(key: K, value: DesktopSettings["studio"][K]) => void; onGenerate: () => void; onOpenSettings: () => void; onOpenModels: () => void }) {
+  const running = generation === "running"; return <main className="studio-workspace"><section className="control-panel"><div className="workspace-heading"><div><span className="eyebrow">Create</span><h1>New image</h1></div><Aperture /></div>
+    <button className="model-selector" onClick={onOpenModels}><span><small>Model</small><strong>{selectedModel?.name ?? "Forge default"}</strong></span><Boxes /></button>
+    <div className="field-group"><label htmlFor="negative">Negative prompt</label><textarea id="negative" rows={3} value={value.negativePrompt} placeholder="What should the image avoid?" onChange={event => onChange("negativePrompt", event.target.value)} /></div><div className="section-label"><SlidersHorizontal /><span>Image settings</span></div><div className="field-grid"><NumberField label="Width" value={value.width} min={256} max={2048} step={64} onChange={number => onChange("width", number)} /><NumberField label="Height" value={value.height} min={256} max={2048} step={64} onChange={number => onChange("height", number)} /><NumberField label="Steps" value={value.steps} min={1} max={150} onChange={number => onChange("steps", number)} /><NumberField label="CFG scale" value={value.cfgScale} min={1} max={30} step={0.5} onChange={number => onChange("cfgScale", number)} /></div><div className="field-group"><label htmlFor="sampler">Sampler</label><select id="sampler" value={value.sampler} onChange={event => onChange("sampler", event.target.value)}><option>Euler a</option><option>Euler</option><option>DPM++ 2M</option><option>DPM++ 2M Karras</option><option>DPM++ SDE Karras</option></select></div><div className="field-group"><label htmlFor="seed">Seed <span>−1 for random</span></label><input id="seed" type="number" min={-1} max={2147483647} value={value.seed} onChange={event => onChange("seed", Number(event.target.value))} /></div><button className={`connection-card ${connection}`} onClick={onOpenSettings}><span className="connection-icon"><PlugZap /></span><span><strong>{connection === "connected" ? "Forge connected" : "Connect Forge"}</strong><small>{connection === "connected" ? "Local API ready" : "Configure local API"}</small></span><span className="connection-dot" /></button></section>
+    <section className="creation-stage"><div className="stage-topbar"><div><span className="eyebrow">Canvas</span><strong>{image ? "Latest generation" : "Preview"}</strong></div>{resultSeed !== null && <span className="seed-chip">Seed {resultSeed}</span>}</div><div className={`canvas ${generation}`}>{image ? <img src={image} alt="Generated result" /> : <div className="canvas-empty"><div className="empty-icon"><ImageIcon /></div><h2>Your next idea starts here</h2><p>Describe an image below, connect a local Forge API, and generate.</p></div>}{running && <div className="generating-overlay"><LoaderCircle /><strong>Creating your image</strong><span>This can take a moment on local hardware.</span></div>}</div><div className="composer"><label htmlFor="prompt">Prompt</label><textarea id="prompt" rows={3} autoFocus value={value.prompt} placeholder="Describe the image you want to create…" onChange={event => onChange("prompt", event.target.value)} onKeyDown={event => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !running) onGenerate(); }} /><div className="composer-footer"><div className={`generation-status ${generation}`}>{generation === "success" ? <Check /> : generation === "error" ? <CircleAlert /> : <Sparkles />}<span>{message || "Ctrl + Enter to generate"}</span></div><button className="generate-button" disabled={running || !value.prompt.trim()} onClick={onGenerate}>{running ? <LoaderCircle className="spin" /> : <Sparkles />}{running ? "Generating" : "Generate"}</button></div></div></section></main>;
+}
 
-function Studio({ value, connection, generation, message, image, resultSeed, onChange, onGenerate, onOpenSettings }: StudioProps) {
-  const running = generation === "running";
-  return <main className="studio-workspace">
-    <section className="control-panel">
-      <div className="workspace-heading"><div><span className="eyebrow">Create</span><h1>New image</h1></div><Aperture /></div>
-      <div className="field-group">
-        <label htmlFor="negative">Negative prompt</label>
-        <textarea id="negative" rows={3} value={value.negativePrompt} placeholder="What should the image avoid?" onChange={event => onChange("negativePrompt", event.target.value)} />
-      </div>
-      <div className="section-label"><SlidersHorizontal /><span>Image settings</span></div>
-      <div className="field-grid">
-        <NumberField label="Width" value={value.width} min={256} max={2048} step={64} onChange={number => onChange("width", number)} />
-        <NumberField label="Height" value={value.height} min={256} max={2048} step={64} onChange={number => onChange("height", number)} />
-        <NumberField label="Steps" value={value.steps} min={1} max={150} onChange={number => onChange("steps", number)} />
-        <NumberField label="CFG scale" value={value.cfgScale} min={1} max={30} step={0.5} onChange={number => onChange("cfgScale", number)} />
-      </div>
-      <div className="field-group"><label htmlFor="sampler">Sampler</label><select id="sampler" value={value.sampler} onChange={event => onChange("sampler", event.target.value)}><option>Euler a</option><option>Euler</option><option>DPM++ 2M</option><option>DPM++ 2M Karras</option><option>DPM++ SDE Karras</option></select></div>
-      <div className="field-group"><label htmlFor="seed">Seed <span>−1 for random</span></label><input id="seed" type="number" min={-1} max={2147483647} value={value.seed} onChange={event => onChange("seed", Number(event.target.value))} /></div>
-      <button className={`connection-card ${connection}`} onClick={onOpenSettings}>
-        <span className="connection-icon"><PlugZap /></span><span><strong>{connection === "connected" ? "Forge connected" : "Connect Forge"}</strong><small>{connection === "connected" ? "Local API ready" : "Configure local API"}</small></span><span className="connection-dot" />
-      </button>
+function ModelsView({ settings, downloads, library, onLibrary, onSettings, onUse }: { settings: DesktopSettings; downloads: DownloadRecord[]; library: InstalledModel[]; onLibrary: (value: InstalledModel[]) => void; onSettings: (value: DesktopSettings) => void; onUse: (id: string) => Promise<void> }) {
+  const [url, setUrl] = useState(""); const [resolving, setResolving] = useState(false); const [resolveError, setResolveError] = useState(""); const [remote, setRemote] = useState<RemoteModel | null>(null); const [versionId, setVersionId] = useState<number | null>(null); const [fileId, setFileId] = useState<number | null>(null); const [roots, setRoots] = useState<ModelRoot[]>([]); const [destinationId, setDestinationId] = useState(""); const [preflight, setPreflight] = useState<{ freeBytes: number; sufficient: boolean; warning?: string | undefined } | null>(null); const [search, setSearch] = useState(""); const [filter, setFilter] = useState<ModelType | "all">("all"); const [credential, setCredential] = useState<CredentialStatus>({ configured: false, state: "not_configured" });
+  useEffect(() => { void Promise.all([window.aureline.models.getRoots(), window.aureline.models.getCredentialStatus()]).then(([nextRoots, status]) => { setRoots(nextRoots); setCredential(status); }); }, []);
+  const version = remote?.versions.find(item => item.versionId === versionId); const file = version?.files.find(item => item.fileId === fileId);
+  const filtered = useMemo(() => library.filter(item => (filter === "all" || item.type === filter) && `${item.name} ${item.fileName} ${item.baseModel ?? ""}`.toLowerCase().includes(search.toLowerCase())), [library, search, filter]);
+  const resolveUrl = async () => { setResolving(true); setResolveError(""); setRemote(null); setPreflight(null); const result = await window.aureline.models.resolveCivitaiUrl(url, settings.models.preferredCivitaiHost); setResolving(false); if (!result.ok) { setResolveError(result.error.message); return; } setRemote(result.model); const selectedVersion = result.model.versions.find(item => item.versionId === result.model.requestedVersionId) ?? result.model.versions[0]!; const selectedFile = selectedVersion.files.find(item => item.primary) ?? selectedVersion.files[0]; setVersionId(selectedVersion.versionId); setFileId(selectedFile?.fileId ?? null); const root = roots.find(item => item.type === result.model.type && item.available) ?? (result.model.type === "lycoris" ? roots.find(item => item.id === "lora") : undefined); setDestinationId(root?.id ?? ""); };
+  useEffect(() => { if (!remote || !versionId || !fileId || !destinationId) { setPreflight(null); return; } void window.aureline.models.preflight({ resolveId: remote.resolveId, versionId, fileId, destinationId }).then(setPreflight).catch(error => setPreflight({ freeBytes: 0, sufficient: false, warning: safeIpcMessage(error, "Destination preflight failed.") })); }, [remote?.resolveId, versionId, fileId, destinationId]);
+  const start = async () => { if (!remote || !versionId || !fileId || !destinationId || !preflight?.sufficient) return; if ((file?.sizeBytes ?? 0) > 1024 ** 3 && !window.confirm(`Download ${formatBytes(file!.sizeBytes!)}? Large model files can take significant time and disk space.`)) return; const result = await window.aureline.models.startDownload({ resolveId: remote.resolveId, versionId, fileId, destinationId }); if (!result.ok) setResolveError(result.error.message); };
+  return <main className="models-page"><header className="page-heading"><div><span className="eyebrow">Local collection</span><h1>Models</h1><p>Bring trusted Civitai resources into Aureline’s managed model library.</p></div><button className="secondary-button" onClick={() => void window.aureline.models.refreshLibrary().then(onLibrary)}><RefreshCw />Refresh library</button></header>
+    <section className="import-hero"><div className="import-title"><span className="feature-icon"><Download /></span><div><h2>Import from Civitai</h2><p>Paste a model or version link. Nothing downloads until you review and confirm.</p></div><span className={`credential-pill ${credential.state}`}><ShieldCheck />{credential.configured ? `API key ${credential.state}` : "Public access"}</span></div><div className="import-row"><input aria-label="Civitai URL" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://civitai.com/models/…" /><button className="icon-button" aria-label="Paste Civitai URL" onClick={() => void navigator.clipboard.readText().then(setUrl)}><ClipboardPaste /></button><button className="primary-button" disabled={resolving || !url.trim()} onClick={() => void resolveUrl()}>{resolving ? <LoaderCircle className="spin" /> : <Search />}{resolving ? "Resolving" : "Resolve"}</button></div>{resolveError && <div className="inline-error"><CircleAlert />{resolveError}</div>}
+      {remote && version && <div className="remote-card"><Preview preview={version.previews[0]} blur={settings.models.previewSensitivity === "blur"} /><div className="remote-copy"><div className="model-badges"><span>{remote.type}</span><span>{remote.providerHost}</span>{remote.sensitive && <span>Sensitive</span>}</div><h3>{remote.name}</h3><p>{remote.creator ? `by ${remote.creator}` : "Creator unavailable"}{remote.descriptionSummary ? ` · ${remote.descriptionSummary}` : ""}</p><div className="selection-grid"><label>Version<select value={versionId ?? ""} onChange={event => { const id = Number(event.target.value); setVersionId(id); const next = remote.versions.find(item => item.versionId === id); setFileId((next?.files.find(item => item.primary) ?? next?.files[0])?.fileId ?? null); }}>{remote.versions.map(item => <option key={item.versionId} value={item.versionId}>{item.name}{item.baseModel ? ` · ${item.baseModel}` : ""}</option>)}</select></label><label>File<select value={fileId ?? ""} onChange={event => setFileId(Number(event.target.value))}>{version.files.map(item => <option key={item.fileId} value={item.fileId}>{item.primary ? "Recommended · " : ""}{item.name} · {formatBytes(item.sizeBytes)}</option>)}</select></label><label>Destination<select value={destinationId} onChange={event => setDestinationId(event.target.value)}><option value="">Choose a supported root</option>{roots.filter(root => root.available && (root.type === remote.type || (remote.type === "lycoris" && root.id === "lora"))).map(root => <option key={root.id} value={root.id}>{root.location}</option>)}</select></label></div><div className={`preflight ${preflight?.sufficient ? "ready" : "warning"}`}><HardDrive /><span>{preflight ? `${formatBytes(preflight.freeBytes)} free${preflight.warning ? ` · ${preflight.warning}` : " · destination ready"}` : "Choose a destination to run disk preflight."}</span></div><button className="download-button" disabled={!file || !preflight?.sufficient} onClick={() => void start()}><Download />Download {file ? formatBytes(file.sizeBytes) : ""}</button></div></div>}
     </section>
-
-    <section className="creation-stage">
-      <div className="stage-topbar"><div><span className="eyebrow">Canvas</span><strong>{image ? "Latest generation" : "Preview"}</strong></div>{resultSeed !== null && <span className="seed-chip">Seed {resultSeed}</span>}</div>
-      <div className={`canvas ${generation}`}>
-        {image ? <img src={image} alt="Generated result" /> : <div className="canvas-empty"><div className="empty-icon"><ImageIcon /></div><h2>Your next idea starts here</h2><p>Describe an image below, connect a local Forge API, and generate.</p></div>}
-        {running && <div className="generating-overlay"><LoaderCircle /><strong>Creating your image</strong><span>This can take a moment on local hardware.</span></div>}
-      </div>
-      <div className="composer">
-        <label htmlFor="prompt">Prompt</label>
-        <textarea id="prompt" rows={3} autoFocus value={value.prompt} placeholder="Describe the image you want to create…" onChange={event => onChange("prompt", event.target.value)} onKeyDown={event => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !running) onGenerate(); }} />
-        <div className="composer-footer">
-          <div className={`generation-status ${generation}`}>{generation === "success" ? <Check /> : generation === "error" ? <CircleAlert /> : <Sparkles />}<span>{message || "Ctrl + Enter to generate"}</span></div>
-          <button className="generate-button" disabled={running || !value.prompt.trim()} onClick={onGenerate}>{running ? <LoaderCircle className="spin" /> : <Sparkles />}{running ? "Generating" : "Generate"}</button>
-        </div>
-      </div>
-    </section>
+    <section className="models-section"><div className="section-heading"><div><h2>Downloads</h2><span>{downloads.filter(item => !["completed", "cancelled"].includes(item.state)).length} active</span></div></div>{downloads.length === 0 ? <Empty icon={<Download />} title="No downloads yet" copy="Resolved model downloads will appear here with live progress." /> : <div className="download-list">{downloads.map(item => <DownloadItem key={item.id} item={item} keepPartial={settings.models.keepPartialDownloads} onUse={onUse} />)}</div>}</section>
+    <section className="models-section"><div className="section-heading library-tools"><div><h2>Model library</h2><span>{filtered.length} models</span></div><div><label className="search-box"><Search /><input aria-label="Search model library" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search models" /></label><select aria-label="Filter model type" value={filter} onChange={event => setFilter(event.target.value as ModelType | "all")}><option value="all">All types</option>{(["checkpoint", "lora", "lycoris", "vae", "embedding", "controlnet", "upscaler", "other"] as const).map(type => <option key={type}>{type}</option>)}</select></div></div>{filtered.length === 0 ? <Empty icon={<Boxes />} title="Your library is ready" copy="Import from Civitai or refresh to discover supported local model files." /> : <div className="library-grid">{filtered.map(model => <article className="library-card" key={model.id}><div className="file-glyph"><Boxes /></div><div><div className="model-badges"><span>{model.type}</span><span>{model.source}</span><span>installed</span>{model.duplicate && <span>Duplicate</span>}</div><h3>{model.name}</h3><p>{model.baseModel ?? "Base model unknown"} · {formatBytes(model.sizeBytes)}</p><small>{model.location}</small></div><div className="card-actions"><button aria-label={`Reveal ${model.name}`} onClick={() => void window.aureline.models.revealModel(model.id)}><FolderOpen /></button>{model.type === "checkpoint" && <button className="use-button" onClick={() => void onUse(model.id)}>Use in Studio</button>}</div></article>)}</div>}</section>
   </main>;
 }
 
-function NumberField({ label, value, min, max, step = 1, onChange }: { label: string; value: number; min: number; max: number; step?: number; onChange: (value: number) => void }) {
-  return <div className="field-group"><label>{label}</label><input type="number" value={value} min={min} max={max} step={step} onChange={event => onChange(Number(event.target.value))} /></div>;
-}
+function Preview({ preview, blur }: { preview: RemoteModel["versions"][number]["previews"][number] | undefined; blur: boolean }) { const [src, setSrc] = useState<string | null>(null); useEffect(() => { setSrc(null); if (preview) void window.aureline.models.getPreview(preview.id).then(result => { if (result.ok) setSrc(result.dataUrl); }); }, [preview?.id]); return <div className={`remote-preview ${preview?.sensitive && blur ? "blurred" : ""}`}>{src ? <img src={src} alt="Civitai model preview" /> : <ImageIcon />}{preview?.sensitive && blur && <span>Preview blurred</span>}</div>; }
+function DownloadItem({ item, keepPartial, onUse }: { item: DownloadRecord; keepPartial: boolean; onUse: (id: string) => Promise<void> }) { const percent = item.totalBytes ? Math.min(100, item.receivedBytes / item.totalBytes * 100) : 0; const refreshCopy = item.engineRefresh === "refreshed" ? "engine refreshed" : item.engineRefresh === "required" ? "engine refresh required" : item.engineRefresh === "pending" ? "refreshing engine" : ""; return <article className="download-item"><div className={`download-state ${item.state}`}>{item.state === "completed" ? <Check /> : item.state === "failed" ? <CircleAlert /> : item.state === "paused" ? <Pause /> : <Download />}</div><div className="download-main"><div><strong>{item.fileName}</strong><span>{item.modelName} · {item.versionName}</span></div><div className="progress-track" aria-label={`${Math.round(percent)} percent`}><span style={{ width: `${percent}%` }} /></div><small>{item.state} · {formatBytes(item.receivedBytes)}{item.totalBytes ? ` / ${formatBytes(item.totalBytes)}` : ""}{item.bytesPerSecond ? ` · ${formatBytes(item.bytesPerSecond)}/s` : ""}{item.etaSeconds ? ` · ${formatEta(item.etaSeconds)}` : ""}{refreshCopy ? ` · ${refreshCopy}` : ""}{item.error ? ` · ${item.error.message}` : ""}</small></div><div className="download-actions">{item.canPause && <button aria-label="Pause" onClick={() => void window.aureline.models.pauseDownload(item.id)}><Pause /></button>}{item.canResume && <button aria-label="Resume" onClick={() => void window.aureline.models.resumeDownload(item.id)}><Play /></button>}{item.canRetry && <button aria-label="Retry" onClick={() => void window.aureline.models.retryDownload(item.id)}><RefreshCw /></button>}{!["completed", "cancelled"].includes(item.state) && <button aria-label={keepPartial ? "Cancel and keep partial" : "Cancel and delete partial"} onClick={() => void window.aureline.models.cancelDownload(item.id, !keepPartial)}><Trash2 /></button>}{item.installedModelId && <><button aria-label="Reveal installed model" onClick={() => void window.aureline.models.revealModel(item.installedModelId!)}><FolderOpen /></button><button className="use-button" onClick={() => void onUse(item.installedModelId!)}>Use in Studio</button></>}</div></article>; }
+function Empty({ icon, title, copy }: { icon: React.ReactNode; title: string; copy: string }) { return <div className="models-empty"><span>{icon}</span><h3>{title}</h3><p>{copy}</p></div>; }
+function NumberField({ label, value, min, max, step = 1, onChange }: { label: string; value: number; min: number; max: number; step?: number; onChange: (value: number) => void }) { return <div className="field-group"><label>{label}</label><input type="number" value={value} min={min} max={max} step={step} onChange={event => onChange(Number(event.target.value))} /></div>; }
 
 function SettingsView({ value, connection, connectionMessage, onChange, onBaseUrlChange, onTest, onDone }: { value: DesktopSettings; connection: Connection; connectionMessage: string; onChange: (patch: Partial<Omit<DesktopSettings, "schemaVersion">>) => Promise<DesktopSettings>; onBaseUrlChange: (value: string) => void; onTest: () => void; onDone: () => void }) {
-  return <main className="settings-page">
-    <header className="settings-header"><div><span className="eyebrow">Aureline</span><h1>Settings</h1><p>Connect your local creative engine and tune the application.</p></div><button className="secondary-button" onClick={onDone}>Done</button></header>
-    <section className="settings-card forge-settings">
-      <div className="settings-icon"><PlugZap /></div><div className="settings-copy"><h2>Local Forge API</h2><p>Aureline connects only to Forge running on this computer. Start Forge with API access enabled, then test the connection.</p>
-        <label htmlFor="forge-url">Base URL</label><div className="url-row"><input id="forge-url" value={value.forgeBaseUrl} placeholder="http://127.0.0.1:7860" onChange={event => onBaseUrlChange(event.target.value)} /><button className="primary-button" disabled={connection === "testing"} onClick={onTest}>{connection === "testing" ? <LoaderCircle className="spin" /> : <PlugZap />}Test connection</button></div>
-        <div className={`connection-result ${connection}`}>{connection === "connected" ? <Check /> : connection === "disconnected" ? <CircleAlert /> : <span className="connection-dot" />}<span>{connectionMessage}</span></div>
-      </div>
-    </section>
-    <section className="settings-card compact"><div className="settings-icon"><Sun /></div><div className="settings-copy"><h2>Appearance</h2><p>Choose the surface that best fits your workspace.</p><div className="theme-picker">{(["dark", "light", "system"] as const).map(theme => <button key={theme} className={value.theme === theme ? "active" : ""} onClick={() => void onChange({ theme })}>{theme === "dark" ? <Moon /> : theme === "light" ? <Sun /> : <Settings />}{theme}</button>)}</div></div></section>
-    <p className="settings-note">Forge remains a separate local runtime. Aureline does not bundle models or upload prompts.</p>
-  </main>;
+  const [credential, setCredential] = useState<CredentialStatus>({ configured: false, state: "not_configured" }); const [apiKey, setApiKey] = useState(""); const [credentialMessage, setCredentialMessage] = useState("API key is optional for public models.");
+  useEffect(() => { void window.aureline.models.getCredentialStatus().then(setCredential); }, []);
+  const save = async () => { try { const status = await window.aureline.models.saveCredential(apiKey); setCredential(status); setApiKey(""); setCredentialMessage(status.state === "unavailable" ? "OS-protected encryption is unavailable; the key was not saved." : "API key saved with OS-protected encryption."); } catch { setCredentialMessage("The API key could not be saved."); } };
+  const test = async () => { setCredentialMessage("Testing saved credential…"); const result = await window.aureline.models.testCredential(); setCredential(result.status); setCredentialMessage(result.ok ? "Saved credential is valid." : result.error.message); };
+  return <main className="settings-page"><header className="settings-header"><div><span className="eyebrow">Aureline</span><h1>Settings</h1><p>Connect local creative services and manage trusted providers.</p></div><button className="secondary-button" onClick={onDone}>Done</button></header>
+    <section className="settings-card forge-settings"><div className="settings-icon"><PlugZap /></div><div className="settings-copy"><h2>Local Forge API</h2><p>Aureline connects only to Forge running on this computer.</p><label htmlFor="forge-url">Base URL</label><div className="url-row"><input id="forge-url" value={value.forgeBaseUrl} placeholder="http://127.0.0.1:7860" onChange={event => onBaseUrlChange(event.target.value)} /><button className="primary-button" disabled={connection === "testing"} onClick={onTest}>{connection === "testing" ? <LoaderCircle className="spin" /> : <PlugZap />}Test connection</button></div><div className={`connection-result ${connection}`}>{connection === "connected" ? <Check /> : connection === "disconnected" ? <CircleAlert /> : <span className="connection-dot" />}<span>{connectionMessage}</span></div></div></section>
+    <section className="settings-card"><div className="settings-icon"><KeyRound /></div><div className="settings-copy"><h2>Civitai connection</h2><p>The key is write-only from the renderer and encrypted by Windows. Public metadata does not require one.</p><div className="credential-status"><ShieldCheck /><strong>{credential.state.replace("_", " ")}</strong><span>{credential.configured ? "Credential stored" : "No credential stored"}</span></div><label htmlFor="civitai-key">API key</label><div className="url-row"><input id="civitai-key" type="password" autoComplete="off" value={apiKey} placeholder={credential.configured ? "Enter a replacement key" : "Enter API key"} onChange={event => setApiKey(event.target.value)} /><button className="primary-button" disabled={apiKey.trim().length < 8} onClick={() => void save()}>Save</button></div><div className="settings-actions"><button disabled={!credential.configured} onClick={() => void test()}>Test saved key</button><button disabled={!credential.configured} onClick={() => void window.aureline.models.clearCredential().then(status => { setCredential(status); setCredentialMessage("Saved credential cleared."); })}>Clear</button><span>{credentialMessage}</span></div><label htmlFor="civitai-host">Preferred host</label><select id="civitai-host" value={value.models.preferredCivitaiHost} onChange={event => void onChange({ models: { ...value.models, preferredCivitaiHost: event.target.value as DesktopSettings["models"]["preferredCivitaiHost"] } })}><option value="automatic">Automatic</option><option value="civitai.com">civitai.com</option><option value="civitai.red">civitai.red</option></select></div></section>
+    <section className="settings-card"><div className="settings-icon"><Download /></div><div className="settings-copy"><h2>Model downloads</h2><p>Concurrency is intentionally capped at two. Partial data stays outside Forge discovery.</p><div className="settings-inline"><label>Concurrent downloads<select value={value.models.downloadConcurrency} onChange={event => void onChange({ models: { ...value.models, downloadConcurrency: Number(event.target.value) } })}><option value={1}>1</option><option value={2}>2</option></select></label><label>Preview handling<select value={value.models.previewSensitivity} onChange={event => void onChange({ models: { ...value.models, previewSensitivity: event.target.value as "blur" | "show" } })}><option value="blur">Blur sensitive</option><option value="show">Show sensitive</option></select></label></div><label className="check-row"><input type="checkbox" checked={value.models.keepPartialDownloads} onChange={event => void onChange({ models: { ...value.models, keepPartialDownloads: event.target.checked } })} />Keep partial downloads when cancelling</label><p className="root-summary">Managed roots: Checkpoints, LoRA/LyCORIS, VAE, and Embeddings under Aureline user data. ControlNet and upscaler imports stay disabled until a runtime confirms their roots.</p></div></section>
+    <section className="settings-card compact"><div className="settings-icon"><Sun /></div><div className="settings-copy"><h2>Appearance</h2><p>Choose the surface that best fits your workspace.</p><div className="theme-picker">{(["dark", "light", "system"] as const).map(theme => <button key={theme} className={value.theme === theme ? "active" : ""} onClick={() => void onChange({ theme })}>{theme === "dark" ? <Moon /> : theme === "light" ? <Sun /> : <Settings />}{theme}</button>)}</div></div></section><p className="settings-note">Forge and Civitai remain third-party services. Aureline never uploads prompts to Civitai.</p></main>;
 }
+function formatBytes(value?: number): string { if (value === undefined) return "Size unknown"; if (value < 1024) return `${value} B`; const units = ["KB", "MB", "GB", "TB"]; let size = value / 1024; let index = 0; while (size >= 1024 && index < units.length - 1) { size /= 1024; index += 1; } return `${size >= 10 ? size.toFixed(1) : size.toFixed(2)} ${units[index]}`; }
+function formatEta(seconds: number): string { if (seconds < 60) return `${Math.ceil(seconds)}s left`; if (seconds < 3600) return `${Math.ceil(seconds / 60)}m left`; return `${(seconds / 3600).toFixed(1)}h left`; }
+function safeIpcMessage(error: unknown, fallback: string): string { if (!(error instanceof Error)) return fallback; const message = error.message.replace(/^Error invoking remote method '[^']+': Error: /, ""); return message.length > 0 && message.length <= 300 ? message : fallback; }

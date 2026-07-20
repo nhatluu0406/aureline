@@ -1,0 +1,17 @@
+---
+description: External model provider, download and local model library security rules
+globs:
+  - "packages/model-sources/**"
+  - "packages/download-manager/**"
+  - "packages/model-library/**"
+alwaysApply: false
+---
+
+- Validate exact HTTPS provider hosts and runtime-validate every external response before mapping it to domain data.
+- Keep provider credentials encrypted, write-only from renderer, redacted, out of URLs/settings/logs, and never forward them across hosts.
+- Expose domain-specific resolve/download actions only; never expose arbitrary URL, path, filesystem, or generic downloader IPC.
+- Validate every redirect and reject private, loopback, link-local, non-HTTPS, and unapproved destinations.
+- Download to versioned partial files, throttle progress, use controlled Range resume, verify size/SHA-256, then install by atomic rename without overwrite.
+- Resolve destinations from Aureline-managed runtime roots; sanitize basenames and keep partials out of model discovery.
+- Proxy external previews through main with allowlists, content/size/time bounds, no credentials, and sensitive-content handling.
+- Cover parser attacks, credential redaction, resume/cancel/retry, hash mismatch, duplicate protection, and artifact exclusion with focused tests.

@@ -6,7 +6,7 @@ Aureline is designed around refined creative workflows, efficient GPU usage, and
 
 ## Status
 
-Aureline is in active pre-release development. The desktop now includes a usable Studio text-to-image happy path for an already-running local Forge API, but it is not yet a portable end-user release.
+Aureline is in active pre-release development. The desktop includes a usable Studio text-to-image happy path and a production-oriented Civitai model import vertical slice, but it is not yet a portable end-user release.
 
 ## Vision
 
@@ -16,6 +16,8 @@ Aureline aims to provide a focused Windows creative environment without requirin
 
 - Premium dark-first Electron and React shell with Studio and Settings workspaces.
 - Typed local Forge connection testing and a real txt2img request flow with result, running, success, and recoverable failure states.
+- A Models workspace for validated `civitai.com`/`civitai.red` links, version/file review, disk preflight, resumable verified downloads, and an indexed local library.
+- OS-protected, write-only Civitai credential storage; public metadata remains usable without a key when Civitai permits it.
 - Light, dark, and system themes.
 - Forge engine start, stop, restart, readiness, and bounded redacted logs.
 - Windows process-tree ownership through a Rust Job Object helper.
@@ -26,7 +28,7 @@ Aureline aims to provide a focused Windows creative environment without requirin
 ## Planned capabilities
 
 - Advanced Studio workflows, queues, image editing, and model controls.
-- Model discovery, management, and download workflows.
+- Additional model providers, marketplace browsing, bulk downloads, and automatic model updates.
 - GPU telemetry and calibrated VRAM safety profiles.
 - A fully materialized portable Forge runtime.
 - Signed release artifacts, rollback, and update workflows.
@@ -41,7 +43,7 @@ Forge remains a third-party engine. Aureline does not vendor Forge core at the r
 
 ```text
 app/                 Electron main, preload, React renderer, and app resources
-packages/            Contracts, process supervision, local bridge, settings, runtime manifest
+packages/            Contracts, model sources/library/downloads, process supervision, settings
 engine/              Aureline adapter and external runtime manifests
 native/job-owner/    Windows Job Object helper source
 tests/               Production unit, integration, and controlled smoke fixtures
@@ -98,6 +100,14 @@ Runtime manifests are validated by Aureline and point to an external Python exec
 
 For the Studio happy path, start a compatible Forge instance with its normal API enabled, open **Settings**, enter its loopback URL (default `http://127.0.0.1:7860`), and test the connection. Studio sends txt2img requests through Electron main; the renderer never contacts localhost directly.
 
+## Civitai model import
+
+Open **Models**, paste a supported HTTPS model link from `civitai.com` or `civitai.red`, then resolve and review the model, version, file, size, and managed destination. Aureline does not auto-start downloads. Transfers use partial files, controlled Range resume, bounded retry, size/SHA-256 verification when provider metadata supplies it, and atomic installation without overwrite.
+
+Public metadata does not require a key when the provider allows it. A key can be saved and tested under **Settings → Civitai connection**; it is encrypted with Electron `safeStorage`, never read back into the renderer, and never stored in settings, URLs, or logs. Checkpoints, LoRA/LyCORIS, VAE, and embeddings have verified Forge-compatible roots. ControlNet, upscalers, and unknown types stay disabled until a runtime confirms their destination.
+
+See [model import development](docs/development/model-import.md), [focused model tests](docs/development/model-import-testing.md), and the [security boundary](docs/architecture/model-import-security.md).
+
 ## Local Forge reference
 
 Developers may optionally clone the [official upstream Forge repository](https://github.com/lllyasviel/stable-diffusion-webui-forge) to `.reference/stable-diffusion-webui-forge`. The checkout is local-only, ignored by Git, must not be committed or modified for Aureline work, and is not production source. UI-only work does not require it. Production runtimes are pinned and materialized separately through Aureline runtime manifests and engine tooling.
@@ -109,6 +119,7 @@ Developers may optionally clone the [official upstream Forge repository](https:/
 - Forge is guarded before bind; Electron main validates a per-launch protected identity.
 - Classic Forge uses an ephemeral isolated session with controlled navigation, permissions, downloads, and authorization-header injection.
 - Secrets are transferred through an anonymous pipe, redacted from logs, and rotated on engine restart.
+- Civitai URLs, API responses, redirects, preview images, destinations, and downloaded hashes are validated in Electron main; renderer IPC cannot supply arbitrary download URLs or filesystem paths.
 
 This boundary reduces ordinary local and browser-origin threats; it is not intended to defend against administrators, same-user malware with process-memory access, or a compromised operating system.
 

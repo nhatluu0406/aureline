@@ -9,15 +9,19 @@ const defaults: DesktopSettings = {
   closeBehavior: "stop-and-quit",
   logLevel: "info",
   forgeBaseUrl: "http://127.0.0.1:7860",
-  studio: { prompt: "", negativePrompt: "", width: 1024, height: 1024, steps: 20, cfgScale: 7, seed: -1, sampler: "Euler a" },
+  studio: { prompt: "", negativePrompt: "", width: 1024, height: 1024, steps: 20, cfgScale: 7, seed: -1, sampler: "Euler a", selectedModelId: null },
+  models: { preferredCivitaiHost: "automatic", downloadConcurrency: 1, keepPartialDownloads: true, previewSensitivity: "blur" },
 };
 
 export class SettingsStore {
   #value: DesktopSettings = defaults;
   public constructor(private readonly path: string) {}
-  public get value(): DesktopSettings { return { ...this.#value }; }
+  public get value(): DesktopSettings { return structuredClone(this.#value); }
   public async load(): Promise<DesktopSettings> {
-    try { this.#value = settingsSchema.parse({ ...defaults, ...JSON.parse(await readFile(this.path, "utf8")) }); }
+    try {
+      const stored = JSON.parse(await readFile(this.path, "utf8")) as Partial<DesktopSettings>;
+      this.#value = settingsSchema.parse({ ...defaults, ...stored, studio: { ...defaults.studio, ...stored.studio }, models: { ...defaults.models, ...stored.models } });
+    }
     catch { this.#value = defaults; }
     return this.value;
   }

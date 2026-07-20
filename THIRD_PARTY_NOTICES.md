@@ -10,4 +10,6 @@ Electron, Chromium, Node.js, React, Rust, Python, FastAPI, Gradio, and npm/Pytho
 
 Models are not bundled. Model licenses and provenance remain separate from the Aureline application and engine-runtime licenses.
 
+Civitai is an external third-party model metadata and file provider. Aureline does not bundle Civitai content, does not claim ownership of downloaded models or previews, and does not change the license attached by a model creator/provider. Users must review each model's license and usage terms before downloading or using it.
+
 This notice records the intended technical license boundary and does not replace a legal review of a release artifact.

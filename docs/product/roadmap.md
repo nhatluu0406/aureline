@@ -357,6 +357,6 @@ Verification levels:
 
 ## 2. Current delivery boundary
 
-The premium application shell, first Studio workspace, and focused one-image txt2img happy path are implemented. The next increments should stay small: model selection, progress/cancel, and durable output handling can each be delivered independently.
+The premium application shell, first Studio txt2img happy path, Civitai link import, resumable verified model downloads, managed local model index, and checkpoint handoff to Studio are implemented. Marketplace browsing, additional providers, bulk operations, and full runtime activation remain separate work.
 
 GPU/model compatibility certification and the full bundled runtime remain outside the current product state.
