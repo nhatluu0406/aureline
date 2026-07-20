@@ -31,6 +31,9 @@ engine/.runtime/
 engine/.cache/
 engine/manifests/runtime-manifest.local.json
 
+# Local third-party source references
+/.reference/
+
 # Models, outputs, caches, and generated artifacts
 /models/
 /outputs/

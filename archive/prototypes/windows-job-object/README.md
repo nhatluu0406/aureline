@@ -189,7 +189,7 @@ Helper development binary nằm trong ignored `build/`, không commit. Source v�
 Yêu cầu development: Windows x64, Node 24+, npm và Rust MSVC target. Không cần Visual Studio shell ở runtime và không có Cargo crate dependency.
 
 ```powershell
-cd desktop/prototypes/windows-job-object
+cd archive/prototypes/windows-job-object
 npm install --ignore-scripts --no-audit --no-fund
 npm run build:helper
 npm run typecheck

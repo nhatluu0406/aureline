@@ -1,0 +1,16 @@
+---
+description: Premium UI and UX quality rules for the Aureline renderer
+globs:
+  - "app/renderer/**"
+  - "packages/ui/**"
+alwaysApply: false
+---
+
+- Aureline must feel like a premium product, not a starter template; use owned design tokens and consistent typography and spacing.
+- Implement truthful empty, loading, error, and success states; never fake engine state.
+- Support keyboard navigation, visible focus, accessible labels, and light/dark/system themes.
+- Handle desktop resizing without clipped critical controls or broken hierarchy.
+- Prefer progressive disclosure and an image-first creative workflow.
+- Do not use emoji as product icons or scatter inline styles.
+- Give every component clear ownership and a focused public surface.
+- Review visual changes in the running UI across themes and representative sizes.

@@ -12,7 +12,7 @@ Spike này kiểm chứng Decision C trên Forge/FastAPI/Gradio thật tại Git
 - CPython `3.10.11` repo-local.
 - Torch `2.3.1+cpu`, Torchvision `0.18.1+cpu`.
 - Gradio `4.40.0`, FastAPI `0.104.1`, Uvicorn `0.51.0`.
-- Forge chạy từ root repository hiện tại; server bind explicit `127.0.0.1`.
+- Forge baseline lịch sử đến từ upstream chính thức; checkout developer hiện tại nếu cần nằm ở `.reference/stable-diffusion-webui-forge`, ngoài prototype và bị ignore. Server bind explicit `127.0.0.1`.
 - Test chạy ngoài managed sandbox vì cần bind loopback và cleanup exact process tree bằng `taskkill /PID ... /T /F`.
 
 Kết quả này chưa chứng minh packaged Electron, Chromium `webRequest`, GPU runtime hay Forge extension bên thứ ba.
@@ -189,7 +189,7 @@ Final run:
 
 ## 24. Upstream conflict assessment
 
-Forge core diff rỗng. Adapter nằm hoàn toàn dưới `desktop/prototypes/`. Rủi ro conflict Git thấp nhưng runtime seam risk trung bình/cao vì phụ thuộc implementation Gradio `Blocks.launch()` và `uvicorn.Config`. Version/source assertions biến drift thành fail-closed startup thay vì silent unauthenticated fallback.
+Forge core diff rỗng. Adapter của spike nằm hoàn toàn dưới `archive/prototypes/real-forge-compatibility/`. Rủi ro conflict Git thấp nhưng runtime seam risk trung bình/cao vì phụ thuộc implementation Gradio `Blocks.launch()` và `uvicorn.Config`. Version/source assertions biến drift thành fail-closed startup thay vì silent unauthenticated fallback.
 
 Production nên có adapter compatibility module theo runtime version, không monkey patch rải rác trong Forge core. Mỗi update Forge/Gradio/Uvicorn phải chạy smoke này trong CI Windows.
 
@@ -229,7 +229,7 @@ Task tiếp theo duy nhất: **packaged-Electron Classic compatibility spike**. 
 ## Cách chạy
 
 ```powershell
-cd desktop/prototypes/real-forge-compatibility
+cd archive/prototypes/real-forge-compatibility
 npm ci --ignore-scripts --no-audit --no-fund
 npm run typecheck
 npm test

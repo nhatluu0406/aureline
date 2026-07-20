@@ -65,3 +65,13 @@ Dev dùng `engine/manifests/runtime-manifest.example.json`; packaged app tìm `%
 ## Runtime selection và writable paths
 
 Không hardcode path máy cá nhân trong source. Không ghi data vào Forge root hoặc ASAR. Engine dùng Electron user-data cho config/extensions/models/outputs; runtime Python/Forge chỉ được tham chiếu qua manifest. App không tự tải runtime khi startup.
+
+## Local Forge reference tùy chọn
+
+Developer chỉ làm UI không cần checkout Forge. Khi cần đọc seam upstream hoặc chuẩn bị real no-model smoke, clone nguồn chính thức vào folder local đã ignore:
+
+```powershell
+git clone https://github.com/lllyasviel/stable-diffusion-webui-forge.git .reference/stable-diffusion-webui-forge
+```
+
+Không sửa, import, package hay dùng checkout này làm runtime production. Real smoke phải nhận Forge root qua `AURELINE_RUNTIME_MANIFEST` trỏ tới manifest local không track, hoặc qua test parameter explicit. Runtime production vẫn pin commit/version/checksum và materialize riêng bằng manifest/tooling dưới `engine/`; không commit absolute local path.

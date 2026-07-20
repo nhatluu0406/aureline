@@ -8,7 +8,7 @@ Khảo sát này dựa trên code tại Git HEAD, không coi README là nguồn 
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Repository | `nhatluu0406/stable-diffusion-webui-forge` |
+| Repository | `lllyasviel/stable-diffusion-webui-forge` (official upstream) |
 | Branch | `main` |
 | HEAD | `dfdcbab685e57677014f05a3309b48cc87383167` |
 | Commit | `Fix SD upscale Batch count (#2950)` |
@@ -213,7 +213,7 @@ Classic content và extension là trusted-local-but-extensible, không được 
 
 ## 11. Điểm tích hợp ít conflict
 
-1. Giữ Aureline trong repository sản phẩm độc lập; quản lý Forge bằng runtime manifest và adapter thay vì sửa core.
+1. Giữ Aureline trong repository sản phẩm độc lập; checkout upstream tùy chọn ở `.reference/stable-diffusion-webui-forge` chỉ để đọc và không phải dependency. Quản lý Forge production bằng runtime manifest, materialization và adapter thay vì sửa core.
 2. Dùng CLI/path/env hiện có thay vì sửa defaults Forge.
 3. Gọi API gốc qua main-process client có contract tests.
 4. Dùng user extension directory cho bridge cực mỏng, versioned cùng desktop runtime nếu thực sự cần.

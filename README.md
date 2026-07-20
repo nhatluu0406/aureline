@@ -47,6 +47,7 @@ tests/               Production unit, integration, and controlled smoke fixtures
 tooling/scripts/     Build, development, packaging, and smoke orchestration
 docs/                Architecture, decisions, development guides, and product roadmap
 archive/prototypes/  Historical technical evidence; never imported by production code
+.reference/          Optional ignored upstream Forge checkout for developer reference only
 .agents/skills/      Narrow repository workflows and quality gates
 ```
 
@@ -88,11 +89,15 @@ npm run build
 npm run package:dir
 ```
 
-The current output is an unsigned unpacked shell with `Aureline.exe`. It is not a full portable Forge distribution.
+The current output is an unsigned unpacked shell with `release/win-unpacked/aureline.exe`. The displayed product name remains `Aureline`; this is not a full portable Forge distribution.
 
 ## Runtime configuration
 
 Runtime manifests are validated by Aureline and point to an external Python executable, Forge root, launcher adapter, and Job Object helper. Start from [`engine/manifests/runtime-manifest.example.json`](engine/manifests/runtime-manifest.example.json), keep machine-local paths untracked, and set `AURELINE_RUNTIME_MANIFEST` for development or smoke runs when needed.
+
+## Local Forge reference
+
+Developers may optionally clone the [official upstream Forge repository](https://github.com/lllyasviel/stable-diffusion-webui-forge) to `.reference/stable-diffusion-webui-forge`. The checkout is local-only, ignored by Git, must not be committed or modified for Aureline work, and is not production source. UI-only work does not require it. Production runtimes are pinned and materialized separately through Aureline runtime manifests and engine tooling.
 
 ## Security model
 
@@ -110,7 +115,7 @@ Aureline-owned source is available under the repository's [MIT License](LICENSE)
 
 ## Roadmap
 
-The next planned product slice is the Studio Generation Foundation: model discovery, prompt workspace, and a typed `txt2img` request contract. See the [roadmap](docs/product/roadmap.md).
+The next proposed task is the Aureline Design Foundation: brand direction, production logo, design tokens, premium application shell, and first Studio workspace layout. See the [roadmap](docs/product/roadmap.md).
 
 ## Contributing
 

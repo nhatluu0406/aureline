@@ -357,13 +357,6 @@ Verification levels:
 
 ## 2. Task kế tiếp được đề xuất
 
-**Forge process supervisor prototype** là task Codex tiếp theo, nhỏ hơn production M3:
+**Aureline Design Foundation — brand direction, production logo, design tokens, premium application shell, and first Studio workspace layout.**
 
-- dùng standard library/dependency tối thiểu;
-- fake child/API làm đường test bắt buộc;
-- optional real Forge `--ui-debug-mode --api` nếu local runtime đáp ứng;
-- xác minh explicit port/retry, readiness, captured logs, staged shutdown và process-tree cleanup;
-- ghi bằng chứng về `/server-stop`, `/server-kill` và secret-in-argv gap;
-- không scaffold UI, không inference, không bridge implementation.
-
-Lý do ưu tiên trước Electron scaffold: khảo sát đã chứng minh process exit/auth/dynamic-port là rủi ro kiến trúc lớn nhất; kết quả prototype sẽ quyết định contract của main process, bridge và portable runtime, tránh khóa scaffold vào assumption sai.
+Task này chưa được triển khai. Studio generation, GPU/model inference và full bundled runtime vẫn nằm ngoài trạng thái hiện tại.

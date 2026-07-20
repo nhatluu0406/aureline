@@ -1,0 +1,18 @@
+---
+description: Electron main, preload, IPC, bridge and process security rules
+globs:
+  - "app/main/**"
+  - "app/preload/**"
+  - "packages/contracts/**"
+  - "packages/local-bridge/**"
+  - "packages/process-supervisor/**"
+alwaysApply: false
+---
+
+- Use domain-specific typed IPC with runtime validation; never expose generic invoke or Electron primitives.
+- Never reveal credentials, PID, backend port, executable path, filesystem, or raw process access to the renderer.
+- Renderer code never calls localhost; Electron main owns engine lifecycle and bridge access.
+- Preserve sandboxing, context isolation, disabled Node integration, navigation and permission controls.
+- Fail closed on invalid input, sender, identity, compatibility, or authentication.
+- Redact secrets and return stable structured errors without sensitive detail.
+- Clean up every subscription and lifecycle listener; test invalid input, teardown, and security boundaries.

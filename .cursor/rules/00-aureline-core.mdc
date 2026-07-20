@@ -1,0 +1,14 @@
+---
+description: Core repository rules for all Aureline work
+globs:
+alwaysApply: true
+---
+
+- Aureline is an independent product; use Git HEAD and canonical docs as truth.
+- Read `AGENTS.md` and check branch/status before work; preserve unrelated changes.
+- Never read, expose, stage, or commit `.env` files.
+- Never report PASS for validation that was not run.
+- Work directly on `main` only when the task explicitly permits it; otherwise follow the documented workflow.
+- Do not modify `.reference/` or add features outside the task scope.
+- Keep product display naming `Aureline` and packaged executable naming `aureline.exe`.
+- Use meaningful, reviewable commit messages.

@@ -131,7 +131,7 @@ Spike tại `../secure-forge-bridge/` chọn hybrid: Studio đi typed IPC → ma
 Yêu cầu Node 24+; không cần Python/GPU/model:
 
 ```powershell
-cd desktop/prototypes/forge-process-supervisor
+cd archive/prototypes/forge-process-supervisor
 npm install --ignore-scripts
 npm run typecheck
 npm test
@@ -142,7 +142,7 @@ npm test
 ## 13. Cách chạy fake demo
 
 ```powershell
-cd desktop/prototypes/forge-process-supervisor
+cd archive/prototypes/forge-process-supervisor
 npm run demo
 ```
 

@@ -1,0 +1,15 @@
+---
+description: Forge runtime, adapter and local reference checkout rules
+globs:
+  - "engine/**"
+  - ".reference/**"
+  - "archive/prototypes/**"
+alwaysApply: false
+---
+
+- Treat `.reference/` as read-only local reference: never commit, import, patch, or package it.
+- Route production Forge integration through Aureline adapters, runtime manifests, and materialization tooling.
+- Pin runtime commit/version/checksum and assert compatibility; fail closed on drift.
+- Run fixture tests and a real no-model runtime smoke when an integration seam changes.
+- Forge is a third-party AGPL-3.0 engine; Aureline's MIT license does not cover Forge source.
+- Treat archived prototypes as evidence only; do not import or copy them wholesale into production.

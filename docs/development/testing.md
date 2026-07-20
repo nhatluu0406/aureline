@@ -37,7 +37,7 @@ npm run package:dir
 npm run smoke:packaged
 ```
 
-Gate mở `release/win-unpacked/Aureline.exe` với temp user-data không có manifest, xác minh app hiển thị trạng thái runtime chưa cấu hình và Start bị disable. Đây chưa phải clean-VM portable release test.
+Gate mở `release/win-unpacked/aureline.exe` với temp user-data không có manifest, xác minh app hiển thị trạng thái runtime chưa cấu hình và Start bị disable. Gate cũng từ chối tên executable cũ, `.reference/` và `.env` trong output. Đây chưa phải clean-VM portable release test.
 
 ## Cleanup và security checks
 

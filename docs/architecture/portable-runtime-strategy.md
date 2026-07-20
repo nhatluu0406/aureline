@@ -10,7 +10,7 @@ Artifact mục tiêu là portable ZIP cho Windows x64: giải nén và chạy, k
 
 ```text
 Aureline/
-  Aureline.exe
+  aureline.exe
   app/
     current/                    # packaged Electron resources; replaceable
     versions/<shell-version>/   # optional staged/previous shell
@@ -54,7 +54,7 @@ Tên directory thực tế có thể đổi sau prototype, nhưng boundary khôn
 
 | Thành phần | Mutable khi chạy? | Lifecycle | Update |
 |---|---:|---|---|
-| `Aureline.exe`, `app/current` | Không | Shell release | Thay riêng shell |
+| `aureline.exe`, `app/current` | Không | Shell release | Thay riêng shell |
 | `runtime/forge/<id>/source` | Về nguyên tắc không | Forge runtime release | Cài side-by-side |
 | `runtime/forge/<id>/python` | Không trong normal run | Python ABI + wheel set | Đi cùng runtime ID |
 | `data/desktop` | Có | User profile | Migrate schema, backup |
@@ -147,7 +147,7 @@ Không dùng single EXE vì:
 - update/rollback từng component kém;
 - model tuyệt đối không phù hợp single-file.
 
-`Aureline.exe` vẫn là một entry dễ dùng trong root; người dùng không cần thấy/cài Python.
+`aureline.exe` vẫn là một entry dễ dùng trong root; tên sản phẩm hiển thị vẫn là `Aureline` và người dùng không cần thấy/cài Python.
 
 ## 7. First-run behavior
 
@@ -203,7 +203,7 @@ Updater production chưa nằm trong scope hiện tại. Foundation chỉ cần 
 
 ## 10. Antivirus, signing và integrity
 
-- Code-sign `Aureline.exe`, Electron executables/helpers và installer/bootstrapper nếu có; timestamp signature.
+- Code-sign `aureline.exe`, Electron executables/helpers và installer/bootstrapper nếu có; timestamp signature.
 - Publish SHA-256 cho ZIP/runtime package và verify trước activation.
 - Tránh packer/obfuscator/self-extract-on-every-run.
 - Stable product/company metadata và predictable file layout giúp giảm false positive.

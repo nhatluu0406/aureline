@@ -1,0 +1,17 @@
+---
+description: Modular backend and package architecture rules
+globs:
+  - "packages/**"
+  - "app/main/**"
+  - "engine/**"
+  - "native/**"
+alwaysApply: false
+---
+
+- Keep module ownership and dependency direction explicit: contract → application service → port → adapter.
+- Renderer/UI code never imports infrastructure adapters; infrastructure never imports renderer code.
+- Keep the composition root in Electron main and reject circular dependencies.
+- Do not create global utility dumping grounds or a package for one small private helper.
+- A new package needs a purpose, public API, errors, lifecycle, dependency policy, and focused tests.
+- Review every new dependency for license, install behavior, size, and removal path.
+- Separate move-only refactors from behavior changes when practical.

@@ -44,6 +44,7 @@
   "build": {
     "appId": "com.aureline.desktop",
     "productName": "Aureline",
+    "executableName": "aureline",
     "asar": true,
     "directories": { "output": "release" },
     "files": ["dist/**", "package.json"],

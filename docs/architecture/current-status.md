@@ -4,13 +4,15 @@
 
 Aureline hiện có production-oriented shell dưới `app/`: Electron main, preload typed, React renderer, Rust Job Object helper, Forge pre-bind adapter, authenticated loopback proxy và Classic Forge trong `WebContentsView`. App có Home, Studio placeholder, Classic Forge, Engine, Settings, light/dark/system theme, bounded live logs và start/stop/restart engine.
 
+Aureline đã tách hoàn toàn khỏi fork Forge cá nhân. Nguồn tham khảo duy nhất là upstream chính thức `lllyasviel/stable-diffusion-webui-forge`; checkout `.reference/` nếu có chỉ là tài liệu local, không phải dependency kiến trúc hay runtime.
+
 Vertical slice đã chạy trên Forge thật ở `--ui-debug-mode`, CPU-only và không model: Job helper tạo Python suspended, assign vào Job Object trước resume, truyền bootstrap credential qua anonymous pipe; adapter cài outer HTTP/WebSocket guard trước bind; main xác minh first protected response, launch identity và safe API capability trước Ready. Classic session tải DOM, JS/CSS, SSE, extension WebSocket và reload qua bridge.
 
 ## Chưa làm
 
 - Chưa có Studio generation, model discovery/browser, downloader, updater, VRAM telemetry/calibration hoặc tray.
 - Chưa bundle Python/Forge runtime 2.78 GB, model hay user data.
-- Chưa có installer, release signing, production icon, update channel hoặc clean-Windows release certification.
+- Chưa có installer, release signing, production logo/icon, update channel hoặc clean-Windows release certification.
 - Chưa test inference/GPU và chưa tuyên bố compatibility với extension bên thứ ba.
 
 ## Chạy ứng dụng
@@ -34,4 +36,4 @@ Packaged `win-unpacked` là shell package, chưa phải portable Forge distribut
 
 ## Milestone tiếp theo
 
-Studio Generation Foundation: model discovery, prompt workspace và typed txt2img request contract; không thay Forge generation pipeline.
+Aureline Design Foundation — brand direction, production logo, design tokens, premium application shell, and first Studio workspace layout. Studio generation và full runtime materialization vẫn là các milestone riêng chưa hoàn thành.

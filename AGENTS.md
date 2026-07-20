@@ -2,6 +2,7 @@
 
 - Git HEAD and the current working tree are the source of truth. Check the branch and `git status` before each task, and preserve unrelated changes.
 - Aureline is an independent product. Forge is a third-party engine/runtime; do not vendor or edit Forge core in this repository. Integrate through `engine/`, manifests, adapters, or narrowly documented patches.
+- The official Forge source is `https://github.com/lllyasviel/stable-diffusion-webui-forge`. An optional checkout under `.reference/stable-diffusion-webui-forge` is ignored, read-only reference material, never a production dependency or package input.
 - Keep the dependency direction `app/renderer -> preload contracts -> app/main -> application packages -> engine/native adapters`. Renderer code must not import Node built-ins or call localhost directly.
 - IPC must be domain-specific, typed, and runtime-validated. Never expose generic invoke/commands, credentials, PID, backend port, raw executable paths, filesystem, or process access to the renderer.
 - Bind managed services only to `127.0.0.1`. Do not enable `--listen`, `--share`, remote access, or wildcard binds by default.
@@ -12,3 +13,5 @@
 - Do not download models, run heavy inference, or silently change Forge generation behavior unless the task explicitly requires it.
 - Do not read, source, print, modify, stage, or commit `.env`. Never log secrets.
 - Commit or push only when the user explicitly authorizes it for the current task. Report results and limitations honestly.
+- Work directly on `main` only when the current task explicitly authorizes it. Product display naming remains `Aureline`; packaged Windows executable naming is `aureline.exe`.
+- Cursor project rules live under `.cursor/rules/` and supplement this file without overriding it.

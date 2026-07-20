@@ -44,6 +44,7 @@ native/job-owner/     # Rust Windows Job Object helper
 tests/                # production unit/integration/smoke fixtures
 tooling/scripts/      # dev/build/package/verify orchestration
 archive/prototypes/   # evidence only; never imported by production
+.reference/           # optional ignored official-upstream checkout; never a dependency
 ```
 
 Chỉ tạo package khi có owner, contract, lifecycle và tests thực tế. Quy tắc app-specific nằm tại `app/AGENTS.md`.
@@ -205,6 +206,8 @@ Cho UX sạch nhưng API không phản ánh mọi extension tab/script/custom co
 ### Same repo vs separate repo
 
 Quyết định ban đầu dùng cùng fork đã được thay thế sau Milestone 1. Aureline nay là repository sản phẩm độc lập để có identity, license boundary và release cadence rõ; runtime manifest vẫn pin chính xác Forge commit để tránh version drift. Forge source được materialize ngoài working source của Aureline và giữ nguyên license third-party.
+
+Nguồn canonical hiện tại là upstream chính thức `https://github.com/lllyasviel/stable-diffusion-webui-forge`. Checkout local `.reference/stable-diffusion-webui-forge` chỉ dùng để khảo sát, bị ignore và không tham gia build, package hoặc runtime manifest committed.
 
 ### Child process vs embedded Python
 
